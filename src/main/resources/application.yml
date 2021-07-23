@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+    url: jdbc:mysql://127.0.0.1:3306/rondo?useUnicode=true&characterEncoding=utf8
+
+  #redis配置
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: 123456
+    database: 0
+    connect-timeout: 5000
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+  mail:
+    protocol: smtp
+    host: smtp.qq.com
+    password: lgdavxgcwukkgbfa
+    username: xjx_me@qq.com
+  mvc:
+    static-path-pattern: /res/**
+
+#mybatis-plus
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: false #取消驼峰
+
+
+
+
+rondo:
+  static-url: localhost:8080/res/
+
+
+
+
+
+
+
+

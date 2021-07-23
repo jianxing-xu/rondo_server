@@ -1,0 +1,131 @@
+package cn.xu.roundo.utils;
+
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.http.HttpRequest;
+import cn.xu.roundo.entity.vo.SearchVo;
+import cn.xu.roundo.enums.ErrorEnum;
+import cn.xu.roundo.response.exception.ApiException;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+
+@Component("KwUtils")
+public class KwUtils {
+
+    @Value("${rondo.static-url}")
+    String staticUrl;
+
+    @Autowired
+    RedisUtil redis;
+
+    public static final Logger log = LoggerFactory.getLogger(KwUtils.class);
+
+    public List<String> getKwSearchKey() {
+        List<String> cacheList = redis.getCacheList(Constants.KwHotKey);
+        if (cacheList != null && cacheList.size() != 0) return cacheList;
+        String token = RandomUtil.randomNumbers(8);
+        try {
+            final String body = HttpRequest.get("http://bd.kuwo.cn/api/www/search/searchKey?key=&httpsStatus=1")
+                    .header("Referer", "http://bd.kuwo.cn")
+                    .header("csrf", token)
+                    .cookie("kw_token=" + token)
+                    .timeout(5000)
+                    .execute()
+                    .body();
+            if (body != null && StringUtils.isNotEmpty(body)) {
+                JSONObject jsonObject = JSONObject.parseObject(body);
+                Object[] keys = jsonObject.getJSONArray("data").toArray();
+                List<String> objects = Convert.toList(String.class, keys);
+                redis.setCacheList(Constants.KwHotKey, objects);
+                redis.expire(Constants.KwHotKey, 1, TimeUnit.HOURS);
+                return objects;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+        }
+        return new ArrayList<String>() {{
+            add("周杰伦");
+            add("林俊杰");
+            add("张学友");
+            add("林志炫");
+            add("毛不易");
+            add("朴树");
+        }};
+    }
+
+    public List<SearchVo> getSearchResult(String keyword, int page) {
+        String token = RandomUtil.randomNumbers(8);
+        List<SearchVo> searchResult = new ArrayList<>();
+        // 取到搜索结果缓存直接返回
+        List<SearchVo> cacheList = redis.getCacheList(Constants.SearchHistoryResult + keyword);
+        if (cacheList != null && cacheList.size() != 0) return cacheList;
+        try {
+            final String body = HttpRequest.get("http://bd.kuwo.cn/api/www/search/searchMusicBykeyWord?key=" + keyword + "&pn=" + page + "&rn=" + 50)
+                    .header("Referer", "http://bd.kuwo.cn")
+                    .header("csrf", token)
+                    .cookie("kw_token=" + token)
+                    .timeout(5000)
+                    .execute()
+                    .body();
+            if (body != null && StringUtils.isNotEmpty(body)) {
+                JSONObject jsonObject = JSONObject.parseObject(body);
+                JSONObject data = jsonObject.getJSONObject("data");
+                if (data == null) {
+                    return searchResult;
+                }
+                JSONArray list = data.getJSONArray("list");
+                list.forEach((song) -> {
+                    //String songPic = staticUrl+"images/logo.png";
+                    JSONObject json = (JSONObject) JSON.toJSON(song);
+                    SearchVo searchVo = new SearchVo();
+                    searchVo.setMid((Long) json.get("rid"));
+                    searchVo.setName((String) json.get("name"));
+                    searchVo.setPic((String) json.get("pic"));
+                    searchVo.setLength((Integer) json.get("duration"));
+                    searchVo.setSinger((String) json.get("artist"));
+                    searchVo.setAlbum((String) json.get("album"));
+                    searchResult.add(searchVo);
+                    //缓存所有歌曲详情
+                    redis.setCacheObject(Constants.SongDetail + searchVo.getMid(), searchVo);
+                    redis.expire(Constants.SongDetail + searchVo.getMid(), 1, TimeUnit.HOURS);
+                });
+                // 对搜索结果缓存，下次用相同搜索结果时，直接取缓存，有效期为1分钟
+                redis.setCacheList(Constants.SearchHistoryResult + keyword, searchResult);
+                redis.expire(Constants.SearchHistoryResult + keyword, 1, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+        }
+        return searchResult;
+    }
+
+    public String getPlayUrl(Long mid) {
+        try {
+            String body = HttpRequest.get("http://bd.kuwo.cn/url?rid=" + mid + "&type=convert_url3&br=128kmp3")
+                    .timeout(5000)
+                    .execute().body();
+            JSONObject json = JSON.parseObject(body);
+            if ("200".equals(String.valueOf(json.get("code")))) {
+                if (StringUtils.isNotEmpty(String.valueOf(json.get("url")))) {
+                    return String.valueOf(json.get("url"));
+                }
+            }
+        } catch (Exception e) {
+            throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+        }
+        return null;
+    }
+}
