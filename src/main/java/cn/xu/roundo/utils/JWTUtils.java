@@ -37,6 +37,20 @@ public class JWTUtils {
         return jwtBuilder.compact();
     }
 
+    public static String createTicker(Map<String, Object> data) {
+        JwtBuilder jwtBuilder = Jwts.builder()
+                .setId(String.valueOf(data.get("account")))
+                .setSubject(String.valueOf(data.get("channel")))    //用户名
+                .setIssuedAt(new Date())//登录时间
+                .signWith(key)
+                .setExpiration(new Date(new
+                        Date().getTime() + 86400000));
+        //设置过期时间
+        //前三个为载荷playload 最后一个为头部 header
+        System.out.println(jwtBuilder.compact());
+        return jwtBuilder.compact();
+    }
+
     /**
      * 验证jwt
      */

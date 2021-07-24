@@ -56,7 +56,7 @@ public class RoomController extends BaseController {
     /**
      * 热门房间
      *
-     * @return
+     * @return 响应对象
      */
     @GetMapping("/hot")
     public Response getHotRooms() {
@@ -81,8 +81,8 @@ public class RoomController extends BaseController {
     /**
      * 创建房间
      *
-     * @param data
-     * @param userId
+     * @param data   CreateRoom DTO
+     * @param userId 用户id
      */
     @PostMapping("/create")
     public Response create(@RequestBody @Validated CreateRoom data, @UserId Integer userId) {
@@ -110,12 +110,12 @@ public class RoomController extends BaseController {
     /**
      * 我的房间信息
      *
-     * @param userId
-     * @return
+     * @param userId 用户id
+     * @return 我的房间信息
      */
     @GetMapping("/myRoom")
     public Response myRoom(@UserId Integer userId) {
-        QueryWrapper<Room> wrap = new QueryWrapper();
+        QueryWrapper<Room> wrap = new QueryWrapper<>();
         wrap.eq("user_id", userId);
         Room room = roomService.getOne(wrap);
         room.setRoom_password(null);
@@ -125,9 +125,9 @@ public class RoomController extends BaseController {
     /**
      * 获取房间信息（加入房间）
      *
-     * @param roomId
-     * @param roomPassword
-     * @return
+     * @param roomId       房间id
+     * @param roomPassword 房间密码
+     * @return 房间信息
      */
     @GetMapping("/getRoom")
     public Response getRoom(@RequestParam("room_id") @NotNull Integer roomId,
@@ -154,9 +154,9 @@ public class RoomController extends BaseController {
     /**
      * 更新房间信息
      *
-     * @param data
-     * @param userId
-     * @return
+     * @param data   UpdateRoomDTO
+     * @param userId 用户id
+     * @return 消息
      */
     @PostMapping("/update")
     public boolean update(@RequestBody @Validated UpdateRoomDTO data, @UserId Integer userId) {
@@ -193,11 +193,11 @@ public class RoomController extends BaseController {
         room.setRoom_addsongcd(data.getRoom_addsongcd());
         room.setRoom_background(data.getRoom_background());
         room.setRoom_id(room_id);
-        boolean updated = roomService.updateById(room);
-
         //TODO：sendWebsocketMsg 发送通知到房间修改成功
+        log.info(String.valueOf(reConnect));
 
-        return updated;
+
+        return roomService.updateById(room);
     }
 
 
@@ -241,24 +241,25 @@ public class RoomController extends BaseController {
         HashMap<String, Object> data = new HashMap<>();
         data.put("account", vo.getAccount());
         data.put("channel", vo.getChannel());
-        String ticker = JWTUtils.createToken(data);
+        String ticker = JWTUtils.createTicker(data);
         vo.setTicker(ticker);
 
         // 最后一次登录，看是否给房间发送欢迎用户消息
         Boolean lastSend = redis.getCacheObject("channel_" + channel + "_user_" + ip);
         // 如果不存在就需要发送欢迎消息
         if (lastSend == null || !lastSend) {
-            StringBuffer content = new StringBuffer("欢迎");
-            if (StringUtils.isNotEmpty(region)) content.append("来自" + region + "的");
+            StringBuilder content = new StringBuilder("欢迎");
+            if (StringUtils.isNotEmpty(region)) content.append("来自").append(region).append("的");
             if (!Common.isVisitor()) {
-                content.append(user.getUser_name() + "回来！");
+                content.append(user.getUser_name()).append("回来！");
             } else if (StringUtils.isNotEmpty(plat)) {
-                content.append(plat + "用户");
+                content.append(plat).append("用户");
             } else {
                 content.append("临时用户");
             }
             //TODO: sendWebsocketMsg 发送系统消息通知用户上线
             // 发送完消息，往redis里存一份记录，记录过期后才需要发送消息，三分钟内重新进入系统不会发送欢迎消息
+            log.info(content.toString());
             redis.setCacheObject("channel_" + channel + "_user_" + ip, true);
             log.info("SEND_WEBSOCKET_MSG: 房间号:" + channel + "中的" + vo.getAccount() + "上线了！");
         }

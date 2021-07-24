@@ -1,3 +1,7 @@
+server:
+  servlet:
+    context-path: /
+
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -24,11 +28,14 @@ spring:
     username: xjx_me@qq.com
   mvc:
     static-path-pattern: /res/**
+#  cache:
+#    redis:
+#      key-prefix:
 
 #mybatis-plus
 mybatis-plus:
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: false #取消驼峰
 
 
@@ -36,11 +43,3 @@ mybatis-plus:
 
 rondo:
   static-url: localhost:8080/res/
-
-
-
-
-
-
-
-

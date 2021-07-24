@@ -1,9 +1,11 @@
 package cn.xu.roundo.utils;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HttpRequest;
 import cn.xu.roundo.entity.vo.SearchVo;
+import cn.xu.roundo.entity.vo.SongQueueVo;
 import cn.xu.roundo.enums.ErrorEnum;
 import cn.xu.roundo.response.exception.ApiException;
 import com.alibaba.fastjson.JSON;
@@ -30,6 +32,37 @@ public class KwUtils {
     RedisUtil redis;
 
     public static final Logger log = LoggerFactory.getLogger(KwUtils.class);
+
+
+    public SearchVo getRandomSong() {
+        List<Integer> bangIds = ListUtil.of(278, 284, 26, 64, 187, 281, 153, 17, 16, 158, 145, 93, 185, 290, 279, 264, 283, 282, 255);
+        Integer bangId = bangIds.get(RandomUtil.randomInt(0, bangIds.size() - 1));
+        String token = RandomUtil.randomNumbers(8);
+        try {
+            String body = HttpRequest.get("http://kuwo.cn/api/www/bang/bang/musicList?bangId=" + bangId + "&pn=1&rn=100")
+                    .header("csrf", token)
+                    .cookie("kw_token=" + token)
+                    .timeout(5000)
+                    .execute()
+                    .body();
+            JSONObject json = JSONObject.parseObject(body);
+            if ("200".equals(String.valueOf(json.get("code")))) {
+                JSONArray array = json.getJSONObject("data").getJSONArray("musicList");
+                JSONObject song = array.getJSONObject(RandomUtil.randomInt(0, array.size() - 1));
+                SearchVo vo = new SearchVo();
+                vo.setMid(Long.parseLong(String.valueOf(song.get("rid"))));
+                vo.setName((String) song.get("name"));
+                vo.setPic((String) song.get("pic"));
+                vo.setLength((Integer) song.get("duration"));
+                vo.setSinger((String) song.get("artist"));
+                return vo;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
 
     public List<String> getKwSearchKey() {
         List<String> cacheList = redis.getCacheList(Constants.KwHotKey);

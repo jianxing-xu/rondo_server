@@ -4,13 +4,18 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
 import cn.xu.roundo.entity.Song;
+import cn.xu.roundo.entity.User;
 import cn.xu.roundo.entity.vo.SearchVo;
+import cn.xu.roundo.entity.vo.SongQueueVo;
 import cn.xu.roundo.mapper.SongMapper;
 import cn.xu.roundo.service.ISongService;
+import cn.xu.roundo.service.IUserService;
+import cn.xu.roundo.utils.Common;
 import cn.xu.roundo.utils.Constants;
 import cn.xu.roundo.utils.RedisUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +41,9 @@ public class SongServiceImpl extends ServiceImpl<SongMapper, Song> implements IS
 
     @Autowired
     RedisUtil redis;
+
+    @Autowired
+    IUserService userService;
 
     @Override
     public List<SearchVo> getWeekHot() {
@@ -67,6 +75,29 @@ public class SongServiceImpl extends ServiceImpl<SongMapper, Song> implements IS
             detail.setMid(song.getSong_mid());
         }
         return detail;
+    }
+
+    @Override
+    public SongQueueVo getRandSongByUser(Integer userId) {
+        User user = userService.getById(userId);
+        List<Song> songs = mapper.selectList(Wrappers.emptyWrapper());
+        if (songs != null && songs.size() != 0) {
+            Song song = songs.get(RandomUtil.randomInt(0, songs.size() - 1));
+            SongQueueVo songQueueVo = new SongQueueVo();
+            songQueueVo.setUser(user);
+            //searchVo
+            SearchVo vo = new SearchVo();
+            vo.setName(song.getSong_name());
+            vo.setPic(song.getSong_pic());
+            vo.setSinger(song.getSong_singer());
+            vo.setLength(song.getSong_length());
+            vo.setMid(song.getSong_mid());
+            songQueueVo.setSong(vo);
+            // 设置播放时间
+            songQueueVo.setSince(Common.time());
+            return songQueueVo;
+        }
+        return null;
     }
 
 

@@ -135,8 +135,24 @@ public class Room implements Serializable {
      */
     private Integer room_updatetime;
 
+    // 是否开启投票
     public boolean isOpenVotePass() {
         return room_votepass == 1;
+    }
+
+    // 是否单曲循环
+    public boolean isSingleCycle() {
+        return room_playone == 1;
+    }
+
+    // 是否为电台模式
+    public boolean isRadioStation() {
+        return room_type == 4;
+    }
+
+    // 是否开启机器人点歌
+    public boolean isRobot() {
+        return room_robot == 1;
     }
 
 

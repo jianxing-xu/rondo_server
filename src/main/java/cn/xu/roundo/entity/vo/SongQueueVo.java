@@ -12,4 +12,7 @@ public class SongQueueVo {
     User user;
     SearchVo song;
     User at;
+
+    // 歌开始播放的时间，用于记录歌曲的播放进度
+    Long since;
 }

@@ -31,19 +31,24 @@ public class RoomServiceImpl extends ServiceImpl<RoomMapper, Room> implements IR
 
     @Override
     public String getRegion(String ip) {
-        String body = HttpRequest.get("https://ipchaxun.com/" + ip + "/")
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36")
-                .timeout(5000)
-                .execute()
-                .body();
-        if (body != null) {
-            List<String> list = ReUtil.findAll("<span class=\"name\">归属地：<\\/span><span class=\"value\">(.*?)<\\/span>", body, 1);
-            if (list.isEmpty()) {
-                return "";
+        try {
+            String body = HttpRequest.get("https://ipchaxun.com/" + ip + "/")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36")
+                    .timeout(5000)
+                    .execute()
+                    .body();
+            if (body != null) {
+                List<String> list = ReUtil.findAll("<span class=\"name\">归属地：<\\/span><span class=\"value\">(.*?)<\\/span>", body, 1);
+                if (list.isEmpty()) {
+                    return "";
+                }
+                return list.get(0);
             }
-            return list.get(0);
+            return "";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
         }
-        return "";
     }
 
     @Override
