@@ -1,0 +1,51 @@
+package cn.xu.rondo.enums;
+
+import lombok.Getter;
+
+@Getter
+public enum ErrorEnum {
+    SUCCESS(1000, "成功"),
+    FAILED(1001, "响应失败"),
+    VALIDATE_FAILED(1002, "参数校验失败"),
+    ERROR(5000, "未知错误"),
+    FORBID(1003, "禁止访问"),
+    ACCOUNT_ERR(1002, "账号或密码错误"),
+    ACCOUNT_EMPTY(1004, "用户不存在"),
+    ROOM_EXIST(1005, "房间已存在"),
+    ROOM_NOT_FOUND(1006, "房间不存在"),
+    ROOM_BANED(1007, "房间已被封禁"),
+    VISITOR_BAN(1008, "游客禁止访问"),
+    ROOM_PSD_ERR(1009, "房间密码错误"),
+    INFO_QUERY_ERR(1010, "信息查询失败"),
+    PSD_VALID_ERR(1011, "密码长度应该为4-16位"),
+    KW_QUERY_ERR(1012, "酷我接口查询失败"),
+    EXIST_FAV(1013, "已经收藏过了"),
+    SONG_QUERY_ERR(1014, "歌曲信息查询失败"),
+    BAN_PLAY(1015, "房间禁止播放"),
+    PERMISSION_LOW(1016, "你还没有权限做这个事"),
+    AT_ME(1017, "“自己给自己送歌，属实不高端”——佚名"),
+    AT_INFO_ERR(1018, "你要送的人找不到拉！"),
+    BAN_USER_ADD_SONG(1019, "你被禁止点歌了"),
+    //    QUEUE_EXIST_SONG(1020,"你点的歌曲");
+    ONLY_ROOM_USER(1021, "该房间仅房主可点歌"),
+    WAIT_ADD_SONG_CD(1022, "点歌太过频繁"),
+    NOT_NOW_PLAY(1023, "没有正在播放的歌曲"),
+    NO_VOTE_PASS(1024, "该房间未开启投票跳过"),
+    PUSH_SELF_ERR(1025, "不能顶自己的歌呦~"),
+    BANED_PUSH(1026, "当前房间设置了不允许顶歌"),
+    PUSH_OUT(1027, "今日顶歌次数已经用完拉~"),
+    REMOVE_ERR(1028, "移除失败，歌曲ID不存在"),
+    PWD_ERROR(1028, "密码错误"),
+    MAIL_CODE_ERR(1029, "验证码错误"),
+    WHAT_FUCK(1030, "你想干嘛？"),
+    FILE_EMPTY(1031, "文件为空！"),
+    FILE_UPLOAD_ERR(1032, "文件上传失败");
+
+    private Integer code;
+    private String msg;
+
+    ErrorEnum(int code, String msg, String... args) {
+        this.code = code;
+        this.msg = msg;
+    }
+}

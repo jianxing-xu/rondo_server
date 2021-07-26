@@ -28,6 +28,10 @@ spring:
     username: xjx_me@qq.com
   mvc:
     static-path-pattern: /res/**
+  web:
+    resources:
+      # linux中这个第一个资源映射路径也应该更改：file:/home/rondo/upload/
+      static-locations: file:/Users/jackson/Desktop/MyProject/BackEnd/rondo/uploads/,classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,classpath:/upload/,classpath:/
 #  cache:
 #    redis:
 #      key-prefix:
@@ -35,7 +39,7 @@ spring:
 #mybatis-plus
 mybatis-plus:
   configuration:
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: false #取消驼峰
 
 
@@ -43,3 +47,10 @@ mybatis-plus:
 
 rondo:
   static-url: localhost:8080/res/
+  # upload-path 本机以下配置，在linux中需要重新配置：/home/rondo/uploads/
+  upload-path: /Users/jackson/Desktop/MyProject/BackEnd/rondo/uploads/
+  avatar-path: ${rondo.upload-path}avatar/
+  ws:
+    path: /ws
+    port: 8081
+
