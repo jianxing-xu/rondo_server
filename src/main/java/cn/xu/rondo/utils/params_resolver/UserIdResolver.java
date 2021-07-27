@@ -26,6 +26,7 @@ public class UserIdResolver implements HandlerMethodArgumentResolver {
     @Override
     public Object resolveArgument(MethodParameter methodParameter, ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest, WebDataBinderFactory webDataBinderFactory) throws Exception {
         HttpServletRequest request = nativeWebRequest.getNativeRequest(HttpServletRequest.class);
+        assert request != null;
         String token = request.getHeader("token");
         if (Constants.tempToken.equals(token)) return -1;
         Claims body = JWTUtils.verifyJwt(token);

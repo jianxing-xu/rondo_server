@@ -9,6 +9,7 @@ spring:
     password: root
     url: jdbc:mysql://127.0.0.1:3306/rondo?useUnicode=true&characterEncoding=utf8
 
+
   #redis配置
   redis:
     host: 127.0.0.1
@@ -32,6 +33,12 @@ spring:
     resources:
       # linux中这个第一个资源映射路径也应该更改：file:/home/rondo/upload/
       static-locations: file:/Users/jackson/Desktop/MyProject/BackEnd/rondo/uploads/,classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,classpath:/upload/,classpath:/
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+    #文件上传大小
+
 #  cache:
 #    redis:
 #      key-prefix:

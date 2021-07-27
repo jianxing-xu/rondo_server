@@ -65,11 +65,11 @@ public class RoomController extends BaseController {
      * @return 响应对象
      */
     @GetMapping("/hot")
-    public Response getHotRooms() {
+    public Response<List<Room>> getHotRooms() {
         // 从redis中取，取到就返回
         List<Room> roomList = redis.getCacheList(Constants.roomList);
         if (roomList != null) {
-            return new Response(roomList);
+            return new Response<>(roomList);
         }
         // 取不到就查询
         QueryWrapper<Room> wrap = new QueryWrapper<>();
@@ -81,7 +81,7 @@ public class RoomController extends BaseController {
         redis.setCacheList(Constants.roomList, list);
         // 设置过期时间
         redis.expire(Constants.roomList, 3, TimeUnit.MINUTES);
-        return new Response(list);
+        return new Response<>(list);
     }
 
     /**
@@ -91,7 +91,7 @@ public class RoomController extends BaseController {
      * @param userId 用户id
      */
     @PostMapping("/create")
-    public Response create(@RequestBody @Validated CreateRoom data, @UserId Integer userId) {
+    public String create(@RequestBody @Validated CreateRoom data, @UserId Integer userId) {
         QueryWrapper<Room> wrapper = new QueryWrapper<>();
         wrapper.eq("room_user", userId);
         Room existRoom = roomService.getOne(wrapper);
@@ -110,7 +110,7 @@ public class RoomController extends BaseController {
         newRoom.setRoom_sendmsg(data.getRoom_sendmsg());
         newRoom.setRoom_robot(data.getRoom_robot());
         roomService.save(newRoom);
-        return new Response(null);
+        return "创建成功！";
     }
 
     /**
@@ -120,12 +120,12 @@ public class RoomController extends BaseController {
      * @return 我的房间信息
      */
     @GetMapping("/myRoom")
-    public Response myRoom(@UserId Integer userId) {
+    public Response<Room> myRoom(@UserId Integer userId) {
         QueryWrapper<Room> wrap = new QueryWrapper<>();
         wrap.eq("user_id", userId);
         Room room = roomService.getOne(wrap);
         room.setRoom_password(null);
-        return new Response(room);
+        return new Response<>(room);
     }
 
     /**
@@ -135,26 +135,57 @@ public class RoomController extends BaseController {
      * @param roomPassword 房间密码
      * @return 房间信息
      */
-    @GetMapping("/getRoom")
-    public Response getRoom(@RequestParam("room_id") @NotNull Integer roomId,
-                            @RequestParam(value = "room_password", required = false) String roomPassword) {
+    @GetMapping("/info/{room_id}")
+    public RoomDetailVO info(@PathVariable("room_id") @NotNull Integer roomId,
+                             @RequestParam(value = "room_password", required = false) String roomPassword,
+                             @UserId Integer userId) {
         Room room = roomService.getById(roomId);
         if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
-        User user = userService.getById(room.getRoom_user());
-        user.setUser_password(null);
+        User admin = userService.getById(room.getRoom_user());
         if (room.getRoom_status().equals(1))
             throw new ApiException(ErrorEnum.ROOM_BANED);
+
         RoomDetailVO vo = new RoomDetailVO();
         vo.setRoom(room);
-        vo.setAdmin(user);
+        vo.setAdmin(admin);
         if (Common.isVisitor()) {
-            if (room.getRoom_public() == 1) throw new ApiException(ErrorEnum.VISITOR_BAN);
-            return new Response(vo);
+            if (!room.isPublic()) throw new ApiException(ErrorEnum.VISITOR_BAN);
+            return vo;
         }
-        if (room.getRoom_public() == 1 && !room.getRoom_password().equals(roomPassword)) {
-            throw new ApiException(ErrorEnum.ROOM_PSD_ERR);
+        User user = userService.getById(userId);
+        if (user == null) throw new ApiException(ErrorEnum.INFO_QUERY_ERR);
+        // 加密房间 && 不是房主 && 不是管理员就需要再次判断
+        if (!room.isPublic() && !room.getRoom_user().equals(userId) && !user.isAdmin()) {
+            // 取用户输入过的密码缓存
+            String savedPassword = redis.getCacheObject(Constants.SavedPwd(roomId, userId));
+            // 如果缓存存在
+            if (savedPassword != null) {
+                //并且匹配房间密码则返回房间信息
+                if (savedPassword.equals(room.getRoom_password())) {
+                    redis.setCacheObject(Constants.SavedPwd(roomId, userId), room.getRoom_password());
+                    redis.expire(Constants.SavedPwd(roomId, userId), 1, TimeUnit.DAYS);
+                    return vo;
+                } else {
+                    // 有缓存但缓存和房间密码不匹配，表示在用户输入密码后，房间修改了密码
+                    redis.deleteObject(Constants.SavedPwd(roomId, userId));
+                    throw new ApiException(ErrorEnum.NEED_PWD);
+                }
+            }
+            // 没有密码缓存  并且输入了密码字段
+            if (roomPassword != null && StringUtils.isNotEmpty(roomPassword)) {
+                // 密码正确
+                if (roomPassword.equals(room.getRoom_password())) {
+                    redis.setCacheObject(Constants.SavedPwd(roomId, userId), room.getRoom_password());
+                    redis.expire(Constants.SavedPwd(roomId, userId), 1, TimeUnit.DAYS);
+                    return vo;
+                } else {
+                    throw new ApiException(ErrorEnum.PWD_ERROR);
+                }
+            }
+            // 没输入密码字段
+            throw new ApiException(ErrorEnum.POP_INPUT_PWD);
         }
-        return new Response(vo);
+        return vo;
     }
 
     /**
@@ -218,7 +249,7 @@ public class RoomController extends BaseController {
                                     @UserId Integer userId,
                                     HttpServletRequest request) {
         String referer = request.getHeader("referer");
-        String ip = Common.getIpAddr(request);
+        String ip = Common.getIpAddr();
         Room room = roomService.getById(channel);
         User user = userService.getById(userId);
         if (room == null) throw new ApiException(ErrorEnum.INFO_QUERY_ERR);
@@ -243,8 +274,12 @@ public class RoomController extends BaseController {
             if (!room.isPublic()) throw new ApiException(ErrorEnum.VISITOR_BAN);
             vo.setAccount(ip);
         } else {
-            if (!room.isPublic() && !password.equals(room.getRoom_password()))
-                throw new ApiException(ErrorEnum.ROOM_PSD_ERR);
+            if (!user.isAdmin() && !userId.equals(room.getRoom_user()) && !room.isPublic()) {
+                String savedPassword = redis.getCacheObject(Constants.SavedPwd(room.getRoom_id(), userId));
+                if (!savedPassword.equals(room.getRoom_password()) && !room.getRoom_password().equals(password)) {
+                    throw new ApiException(ErrorEnum.ROOM_PSD_ERR);
+                }
+            }
             vo.setAccount(String.valueOf(userId));
         }
         vo.setChannel(channel);

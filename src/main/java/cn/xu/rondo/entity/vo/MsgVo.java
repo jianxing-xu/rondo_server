@@ -10,6 +10,7 @@ import lombok.Setter;
 public class MsgVo {
     public static final String JOIN = "join"; // 加入房间
     public static final String PUSH = "push";
+    public static final String CLEAR = "clear";
     private String type;
     private JSONObject data;
 

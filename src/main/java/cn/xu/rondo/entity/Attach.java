@@ -3,6 +3,8 @@ package cn.xu.rondo.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 
 /**
@@ -35,12 +37,13 @@ public class Attach implements Serializable {
      */
     private String attach_type;
 
+    @JsonIgnore
     private String attach_sha;
 
     /**
      * 大小
      */
-    private Integer attach_size;
+    private Long attach_size;
 
     /**
      * 用户
@@ -111,11 +114,11 @@ public class Attach implements Serializable {
         this.attach_sha = attach_sha;
     }
 
-    public Integer getAttach_size() {
+    public Long getAttach_size() {
         return attach_size;
     }
 
-    public void setAttach_size(Integer attach_size) {
+    public void setAttach_size(Long attach_size) {
         this.attach_size = attach_size;
     }
 
@@ -154,17 +157,17 @@ public class Attach implements Serializable {
     @Override
     public String toString() {
         return "Attach{" +
-        "attach_id=" + attach_id +
-        ", attach_path=" + attach_path +
-        ", attach_used=" + attach_used +
-        ", attach_thumb=" + attach_thumb +
-        ", attach_type=" + attach_type +
-        ", attach_sha=" + attach_sha +
-        ", attach_size=" + attach_size +
-        ", attach_user=" + attach_user +
-        ", attach_status=" + attach_status +
-        ", attach_createtime=" + attach_createtime +
-        ", attach_updatetime=" + attach_updatetime +
-        "}";
+                "attach_id=" + attach_id +
+                ", attach_path=" + attach_path +
+                ", attach_used=" + attach_used +
+                ", attach_thumb=" + attach_thumb +
+                ", attach_type=" + attach_type +
+                ", attach_sha=" + attach_sha +
+                ", attach_size=" + attach_size +
+                ", attach_user=" + attach_user +
+                ", attach_status=" + attach_status +
+                ", attach_createtime=" + attach_createtime +
+                ", attach_updatetime=" + attach_updatetime +
+                "}";
     }
 }

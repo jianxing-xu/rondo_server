@@ -39,7 +39,21 @@ public enum ErrorEnum {
     MAIL_CODE_ERR(1029, "验证码错误"),
     WHAT_FUCK(1030, "你想干嘛？"),
     FILE_EMPTY(1031, "文件为空！"),
-    FILE_UPLOAD_ERR(1032, "文件上传失败");
+    FILE_UPLOAD_ERR(1032, "文件上传失败"),
+    AVA_MAX_1M(1033, "头像最大1M"),
+    FILE_TYPE_ERR(1034, "文件类型错误"),
+    MKDIR_ERR(1035, "创建文件夹失败"),
+    BACK_ERR(1036, "撤回失败"),
+    BACK_ONLY_5(1037, "你只能撤回5分钟内的消息"),
+    NEED_PWD(1038, "需要重新输入密码"),
+    POP_INPUT_PWD(1039, "请输入房间密码"),
+    ROOM_SECURE(1040, "加密房间"),
+    ALL_MUTE(1041, "全员禁言中"),
+    MSG_EMPTY(1042, "消息不能为空"),
+    MUTE(1043, "你被房主禁言了"),
+    IP_MUTE(1044, "您所在ip地址被禁止发言"),
+    OFTEN_MSG(1045, "消息发送的太快了！"),
+    SAME_CONTENT(1046, "灌水可耻！请不要频繁发送相同的内容");
 
     private Integer code;
     private String msg;

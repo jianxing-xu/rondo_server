@@ -3,6 +3,7 @@ package cn.xu.rondo.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+
 import java.io.Serializable;
 
 /**
@@ -33,7 +34,7 @@ public class Message implements Serializable {
 
     private String message_where;
 
-    private String message_to;
+    private Integer message_to;
 
     /**
      * content
@@ -88,11 +89,11 @@ public class Message implements Serializable {
         this.message_where = message_where;
     }
 
-    public String getMessage_to() {
+    public Integer getMessage_to() {
         return message_to;
     }
 
-    public void setMessage_to(String message_to) {
+    public void setMessage_to(Integer message_to) {
         this.message_to = message_to;
     }
 
@@ -131,15 +132,15 @@ public class Message implements Serializable {
     @Override
     public String toString() {
         return "Message{" +
-        "message_id=" + message_id +
-        ", message_user=" + message_user +
-        ", message_type=" + message_type +
-        ", message_where=" + message_where +
-        ", message_to=" + message_to +
-        ", message_content=" + message_content +
-        ", message_status=" + message_status +
-        ", message_createtime=" + message_createtime +
-        ", message_updatetime=" + message_updatetime +
-        "}";
+                "message_id=" + message_id +
+                ", message_user=" + message_user +
+                ", message_type=" + message_type +
+                ", message_where=" + message_where +
+                ", message_to=" + message_to +
+                ", message_content=" + message_content +
+                ", message_status=" + message_status +
+                ", message_createtime=" + message_createtime +
+                ", message_updatetime=" + message_updatetime +
+                "}";
     }
 }

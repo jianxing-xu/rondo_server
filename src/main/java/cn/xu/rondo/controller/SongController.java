@@ -277,7 +277,7 @@ public class SongController extends BaseController {
      * @return 响应对象
      */
     @PostMapping("/add")
-    public Response addSong(@RequestParam("mid") @NotNull Long mid,
+    public Response<String> addSong(@RequestParam("mid") @NotNull Long mid,
                             @RequestParam("room_id") @NotNull Integer roomId,
                             @RequestParam(value = "at", required = false) Integer at,
                             @UserId Integer userId) {
@@ -500,7 +500,7 @@ public class SongController extends BaseController {
             PassUserInfoVo pass = new PassUserInfoVo();
             pass.setUser(user.getUser_id());
             pass.setName(user.getUser_name());
-            pass.setIp(Common.getIpAddr(request));
+            pass.setIp(Common.getIpAddr());
             passList.add(0, pass);
             redis.setCacheListForDel(Constants.SongPassList + roomId, passList);
             redis.expire(Constants.SongPassList + roomId, 3600, TimeUnit.SECONDS);
@@ -577,7 +577,7 @@ public class SongController extends BaseController {
      * @return 成功消息
      */
     @PostMapping("/push")
-    public Response push(@RequestParam("mid") @NotNull Long mid,
+    public Response<String> push(@RequestParam("mid") @NotNull Long mid,
                          @RequestParam("room_id") @NotNull Integer roomId,
                          @UserId Integer userId) {
         Room room = roomService.getById(roomId);

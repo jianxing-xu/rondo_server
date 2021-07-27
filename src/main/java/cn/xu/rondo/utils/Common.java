@@ -27,10 +27,8 @@ public class Common {
         return System.currentTimeMillis() / 1000;
     }
 
-    public static String getIpAddr(HttpServletRequest request) {
-        if (request == null) {
-            return "unknown";
-        }
+    public static String getIpAddr() {
+        HttpServletRequest request = ServletUtils.getRequest();
         String ip = request.getHeader("x-forwarded-for");
         if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
@@ -187,7 +185,8 @@ public class Common {
 
     /**
      * 检查用户禁止状态
-     * @param type 类型0：禁言，1：禁止点歌
+     *
+     * @param type   类型0：禁言，1：禁止点歌
      * @param roomId 房间id
      * @param userId 用户id
      * @return 是否禁止

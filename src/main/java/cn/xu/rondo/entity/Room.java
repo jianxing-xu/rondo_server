@@ -380,8 +380,19 @@ public class Room implements Serializable {
         this.room_updatetime = room_updatetime;
     }
 
+    // 是否公开
     public boolean isPublic() {
         return room_public == 0;
+    }
+
+    // 是否房主
+    public boolean isOwner(Integer userId) {
+        return this.room_user.equals(userId);
+    }
+
+    // 是否全员禁言
+    public boolean isBanAll() {
+        return this.room_sendmsg == 1;
     }
 
     @Override

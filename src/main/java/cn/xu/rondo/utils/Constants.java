@@ -110,6 +110,33 @@ public class Constants {
     public static final String OnlineList = "online_list_";
 
     /**
+     * redis 用户输入过的房间密码key
+     */
+    public static String SavedPwd(Integer roomId, Integer userId) {
+        return String.format("password_room_%s_password_%s", roomId, userId);
+    }
+
+    /**
+     * redis 房间聊天消息key_roomId
+     */
+    public static final String RoomMsgList = "room_message_list_";
+
+    /**
+     * redis禁止发言的IP地址列表key
+     */
+    public static String IPBanList = "ip_ban_list";
+
+    /**
+     * redis 最后一次发言记录key_userId
+     */
+    public static String LastSend = "last_send_";
+    /**
+     * redis 最后一次发言消息的内容 key_userId
+     */
+    public static String LastMsg = "last_msg_";
+
+
+    /**
      * 临时token
      */
     public static final String tempToken = "1d40dc0b40000743d69ba671d8a418250f66422df9c61e332deeec7c15a2dade";

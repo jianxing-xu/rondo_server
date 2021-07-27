@@ -54,7 +54,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setUser_name(name);
         user.setUser_group(0);
         user.setUser_salt("Love");
-        user.setUser_ipreg(Common.getIpAddr(ServletUtils.getRequest()));
+        user.setUser_ipreg(Common.getIpAddr());
         log.info(String.valueOf(System.currentTimeMillis()));
         user.setUser_createtime((int) (System.currentTimeMillis() / 1000));
         user.setUser_updatetime((int) (System.currentTimeMillis() / 1000));

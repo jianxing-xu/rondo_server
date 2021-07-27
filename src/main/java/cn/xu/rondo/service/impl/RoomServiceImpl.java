@@ -1,5 +1,7 @@
 package cn.xu.rondo.service.impl;
 
+import cn.hutool.core.net.Ipv4Util;
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpRequest;
 import cn.xu.rondo.entity.Room;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import sun.net.util.IPAddressUtil;
 
 import java.util.List;
 
@@ -32,6 +35,8 @@ public class RoomServiceImpl extends ServiceImpl<RoomMapper, Room> implements IR
 
     @Override
     public String getRegion(String ip) {
+        final boolean innerIP = NetUtil.isInnerIP(ip);
+        if(innerIP) return "本地";
         try {
             String body = HttpRequest.get("https://ipchaxun.com/" + ip + "/")
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36")
