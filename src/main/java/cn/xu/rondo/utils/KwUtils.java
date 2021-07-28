@@ -5,7 +5,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HttpRequest;
 import cn.xu.rondo.entity.vo.SearchVo;
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.exception.ApiException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -85,7 +85,7 @@ public class KwUtils {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+            throw new ApiException(EE.KW_QUERY_ERR);
         }
         return new ArrayList<String>() {{
             add("周杰伦");
@@ -139,7 +139,7 @@ public class KwUtils {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+            throw new ApiException(EE.KW_QUERY_ERR);
         }
         return searchResult;
     }
@@ -156,7 +156,7 @@ public class KwUtils {
                 }
             }
         } catch (Exception e) {
-            throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+            throw new ApiException(EE.KW_QUERY_ERR);
         }
         return null;
     }

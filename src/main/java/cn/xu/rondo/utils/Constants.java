@@ -40,6 +40,15 @@ public class Constants {
      * redis 正在播放的歌曲 key_roomid
      */
     public static final String SongNow = "song_now_";
+    /**
+     * redis 用户最后一次摸的时间key_userId
+     */
+    public static String mo = "mo_";
+
+    /**
+     * 房间线程名前缀
+     */
+    public static String RoomThreadPREFIX = "room-thread-";
 
     /**
      * redis对房间用户禁止点歌 key

@@ -21,6 +21,15 @@ public class Common {
 
     public static RedisUtil redis = SpringUtils.getBean(RedisUtil.class);
 
+    // 根据线程名称获取线程对象
+    public static Thread getThreadByName(String name) {
+        for (Thread t : Thread.getAllStackTraces().keySet()) {
+            if (t.getName().equals(name)) {
+                return t;
+            }
+        }
+        return null;
+    }
 
     //返回当先系统时间的秒数
     public static Long time() {

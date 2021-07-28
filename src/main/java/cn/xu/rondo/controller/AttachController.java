@@ -1,11 +1,9 @@
 package cn.xu.rondo.controller;
 
 
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.lang.UUID;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.xu.rondo.entity.Attach;
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IAttachService;
 import cn.xu.rondo.utils.Common;
@@ -69,7 +67,7 @@ public class AttachController extends BaseController {
                     boolean b = dir.mkdirs();
                     if (!b) {
                         log.error("目录创建失败");
-                        throw new ApiException(ErrorEnum.MKDIR_ERR);
+                        throw new ApiException(EE.MKDIR_ERR);
                     }
                 }
                 // 上传
@@ -94,7 +92,7 @@ public class AttachController extends BaseController {
         } catch (Exception e) {
             //打印错误堆栈信息
             e.printStackTrace();
-            throw new ApiException(ErrorEnum.FILE_UPLOAD_ERR);
+            throw new ApiException(EE.FILE_UPLOAD_ERR);
         }
     }
     //TODO: Coming soon...

@@ -1,7 +1,7 @@
 package cn.xu.rondo.config;
 
 
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.NotResponseWrap;
 import cn.xu.rondo.response.Response;
 import cn.xu.rondo.response.exception.ApiException;
@@ -42,7 +42,7 @@ public class ResponseControllerAdvice implements ResponseBodyAdvice<Object> {
                 // 将数据包装在Response里后，再转换为json字符串响应给前端
                 return objectMapper.writeValueAsString(new Response<>(data));
             } catch (JsonProcessingException e) {
-                throw new ApiException(ErrorEnum.ERROR);
+                throw new ApiException(EE.ERROR);
             }
         }
         // 这里统一包装

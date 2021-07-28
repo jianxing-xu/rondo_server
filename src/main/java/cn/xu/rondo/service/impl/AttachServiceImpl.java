@@ -3,7 +3,7 @@ package cn.xu.rondo.service.impl;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.UUID;
 import cn.xu.rondo.entity.Attach;
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.mapper.AttachMapper;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IAttachService;
@@ -33,14 +33,14 @@ public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> impleme
 
     @Override
     public void checkAvatarType(MultipartFile file) {
-        if (file.isEmpty()) throw new ApiException(ErrorEnum.FILE_EMPTY);
+        if (file.isEmpty()) throw new ApiException(EE.FILE_EMPTY);
         // 检查大小
         long size = file.getSize();
-        if (size / 1024 > 1024) throw new ApiException(ErrorEnum.AVA_MAX_1M);
+        if (size / 1024 > 1024) throw new ApiException(EE.AVA_MAX_1M);
         //检查类型
         String type = file.getContentType();
         if (!"image/jpeg".equals(type) && !"image/png".equals(type))
-            throw new ApiException(ErrorEnum.FILE_TYPE_ERR);
+            throw new ApiException(EE.FILE_TYPE_ERR);
     }
 
     @Override

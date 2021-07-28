@@ -8,11 +8,13 @@ import cn.xu.rondo.entity.dto.UpdateRoomDTO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.entity.vo.RoomDetailVO;
 import cn.xu.rondo.entity.vo.SocketUrlVO;
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IRoomService;
 import cn.xu.rondo.service.IUserService;
 import cn.xu.rondo.socket.IMSocket;
+import cn.xu.rondo.socket.RoomThread;
+import cn.xu.rondo.task.SongTask;
 import cn.xu.rondo.utils.*;
 import cn.xu.rondo.utils.Common;
 import cn.xu.rondo.utils.params_resolver.UserId;
@@ -31,6 +33,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -96,7 +99,7 @@ public class RoomController extends BaseController {
         wrapper.eq("room_user", userId);
         Room existRoom = roomService.getOne(wrapper);
         if (existRoom != null) {
-            throw new ApiException(ErrorEnum.ROOM_EXIST);
+            throw new ApiException(EE.ROOM_EXIST);
         }
         Room newRoom = new Room();
         newRoom.setRoom_user(userId);
@@ -140,20 +143,20 @@ public class RoomController extends BaseController {
                              @RequestParam(value = "room_password", required = false) String roomPassword,
                              @UserId Integer userId) {
         Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         User admin = userService.getById(room.getRoom_user());
         if (room.getRoom_status().equals(1))
-            throw new ApiException(ErrorEnum.ROOM_BANED);
+            throw new ApiException(EE.ROOM_BANED);
 
         RoomDetailVO vo = new RoomDetailVO();
         vo.setRoom(room);
         vo.setAdmin(admin);
         if (Common.isVisitor()) {
-            if (!room.isPublic()) throw new ApiException(ErrorEnum.VISITOR_BAN);
+            if (!room.isPublic()) throw new ApiException(EE.VISITOR_BAN);
             return vo;
         }
         User user = userService.getById(userId);
-        if (user == null) throw new ApiException(ErrorEnum.INFO_QUERY_ERR);
+        if (user == null) throw new ApiException(EE.INFO_QUERY_ERR);
         // 加密房间 && 不是房主 && 不是管理员就需要再次判断
         if (!room.isPublic() && !room.getRoom_user().equals(userId) && !user.isAdmin()) {
             // 取用户输入过的密码缓存
@@ -168,7 +171,7 @@ public class RoomController extends BaseController {
                 } else {
                     // 有缓存但缓存和房间密码不匹配，表示在用户输入密码后，房间修改了密码
                     redis.deleteObject(Constants.SavedPwd(roomId, userId));
-                    throw new ApiException(ErrorEnum.NEED_PWD);
+                    throw new ApiException(EE.NEED_PWD);
                 }
             }
             // 没有密码缓存  并且输入了密码字段
@@ -179,11 +182,11 @@ public class RoomController extends BaseController {
                     redis.expire(Constants.SavedPwd(roomId, userId), 1, TimeUnit.DAYS);
                     return vo;
                 } else {
-                    throw new ApiException(ErrorEnum.PWD_ERROR);
+                    throw new ApiException(EE.PWD_ERROR);
                 }
             }
             // 没输入密码字段
-            throw new ApiException(ErrorEnum.POP_INPUT_PWD);
+            throw new ApiException(EE.POP_INPUT_PWD);
         }
         return vo;
     }
@@ -200,8 +203,8 @@ public class RoomController extends BaseController {
         Integer room_id = data.getRoom_id();
         Room room = roomService.getById(room_id);
         User user = userService.getById(userId);
-        if (room == null) throw new ApiException(ErrorEnum.INFO_QUERY_ERR);
-        if (!userId.equals(room.getRoom_user()) && !user.isAdmin()) throw new ApiException(ErrorEnum.VISITOR_BAN);
+        if (room == null) throw new ApiException(EE.INFO_QUERY_ERR);
+        if (!userId.equals(room.getRoom_user()) && !user.isAdmin()) throw new ApiException(EE.VISITOR_BAN);
         boolean reConnect;
         // 是公开房间就删除密码
         if (data.isPublic()) {
@@ -210,7 +213,7 @@ public class RoomController extends BaseController {
                 || data.getRoom_password().length() < 4
                 || data.getRoom_password().length() > 16) {
             //加密房间：对密码进行校验
-            throw new ApiException(ErrorEnum.PSD_VALID_ERR);
+            throw new ApiException(EE.PSD_VALID_ERR);
         }
         // 如果修改了房间加密信息，就需要重新加载（发送websocket消息到前台）
         reConnect = room.isPublic() != data.isPublic();
@@ -252,7 +255,7 @@ public class RoomController extends BaseController {
         String ip = Common.getIpAddr();
         Room room = roomService.getById(channel);
         User user = userService.getById(userId);
-        if (room == null) throw new ApiException(ErrorEnum.INFO_QUERY_ERR);
+        if (room == null) throw new ApiException(EE.INFO_QUERY_ERR);
         // 获取地区
         String region = redis.getCacheObject(Constants.ipAddress + ip);
         if (region == null) {
@@ -271,13 +274,13 @@ public class RoomController extends BaseController {
         SocketUrlVO vo = new SocketUrlVO();
         if (Common.isVisitor()) {
             // 游客不允许访问加密房间
-            if (!room.isPublic()) throw new ApiException(ErrorEnum.VISITOR_BAN);
+            if (!room.isPublic()) throw new ApiException(EE.VISITOR_BAN);
             vo.setAccount(ip);
         } else {
             if (!user.isAdmin() && !userId.equals(room.getRoom_user()) && !room.isPublic()) {
                 String savedPassword = redis.getCacheObject(Constants.SavedPwd(room.getRoom_id(), userId));
                 if (!savedPassword.equals(room.getRoom_password()) && !room.getRoom_password().equals(password)) {
-                    throw new ApiException(ErrorEnum.ROOM_PSD_ERR);
+                    throw new ApiException(EE.ROOM_PSD_ERR);
                 }
             }
             vo.setAccount(String.valueOf(userId));
@@ -323,5 +326,25 @@ public class RoomController extends BaseController {
         redis.expire("channel_" + channel + "_user_" + ip, 3, TimeUnit.MINUTES);
         return vo;
     }
+
+
+    //===================================================
+    @DeleteMapping("/del/{room_id}")
+    public String delRoom(@PathVariable Integer room_id, @UserId Integer userId) {
+        if (!checkUser(userId).isAdmin()) throw ERR(EE.PERMISSION_LOW);
+        checkRoom(room_id);
+        if (roomService.removeById(room_id)) {
+            // 删除房间数据
+            SongTask.rooms.remove(room_id);
+            // 找到房间线程并停止
+            final RoomThread roomThread = (RoomThread) Common.getThreadByName(Constants.RoomThreadPREFIX + room_id);
+            if (roomThread != null) {
+                //roomThread.interrupt(); // 调用 interrupt 停止线程 可能会导致redis异常等
+                roomThread.exited(); // 设置退出循环标志位停止线程 这中更安全一点
+            }
+        }
+        return "删除成功!";
+    }
+
 }
 

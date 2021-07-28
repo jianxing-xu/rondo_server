@@ -3,7 +3,7 @@ package cn.xu.rondo.enums;
 import lombok.Getter;
 
 @Getter
-public enum ErrorEnum {
+public enum EE {
     SUCCESS(1000, "成功"),
     FAILED(1001, "响应失败"),
     VALIDATE_FAILED(1002, "参数校验失败"),
@@ -53,12 +53,16 @@ public enum ErrorEnum {
     MUTE(1043, "你被房主禁言了"),
     IP_MUTE(1044, "您所在ip地址被禁止发言"),
     OFTEN_MSG(1045, "消息发送的太快了！"),
-    SAME_CONTENT(1046, "灌水可耻！请不要频繁发送相同的内容");
+    SAME_CONTENT(1046, "灌水可耻！请不要频繁发送相同的内容"),
+    NOT_SUP_SEND_PIC(1047, "禁止在18:00~9:00发送自定义上传图片"),
+    NOT_MSG_TYPE(1048, "未知消息类型"),
+    MO_ME(1049, "我摸我自己，哎，就是玩儿！"),
+    OFTEN_MO(1050, "摸的太快啦，稍后在摸！");
 
     private Integer code;
     private String msg;
 
-    ErrorEnum(int code, String msg, String... args) {
+    EE(int code, String msg, String... args) {
         this.code = code;
         this.msg = msg;
     }

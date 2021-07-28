@@ -4,17 +4,21 @@ package cn.xu.rondo;
 //import cn.xu.roundo.service.ISa_confService;
 
 import cn.hutool.core.date.*;
+import cn.hutool.core.thread.ExecutorBuilder;
+import cn.hutool.core.thread.GlobalThreadPool;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpRequest;
+import cn.xu.rondo.entity.Room;
+import cn.xu.rondo.utils.Common;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 import static java.lang.System.*;
 
@@ -63,6 +67,14 @@ class RoundoApplicationTests {
 
     }
 
+    @Test
+    public void testHost() {
+        final String hostIp = Common.getHostIp();
+        final String hostName = Common.getHostName();
+        log.info("hostIP: " + hostIp);
+        log.info("hostName: " + hostName);
+    }
+
 
     @Test
     public void testDate() {
@@ -89,6 +101,71 @@ class RoundoApplicationTests {
         boolean in = now > start.getTimeInMillis() && now < endDate.getTime();
         log.info(in ? "在里面" : "不在里面");
 
+    }
+
+    @Test
+    public void testThread() {
+
+    }
+
+    static public class RoomThread extends Thread {
+        private Room room;
+
+        public RoomThread(Room room) {
+            setName(room.getRoom_id().toString());
+            this.room = room;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                if (isInterrupted()) {
+                    log.info("isInterrupted: " + room.getRoom_name() + "终止了！");
+                    break;
+                }
+                log.info(room.getRoom_name() + "运行中....");
+
+                if (!ThreadUtil.sleep(1000)) {
+                    log.info(room.getRoom_name() + "终止了！");
+                    break;
+                }
+            }
+        }
+    }
+
+
+    public static void main(String[] args) throws InterruptedException {
+        Map<String, Room> rooms = new HashMap<>();
+        rooms.put("888", new Room() {{
+            setRoom_id(888);
+            setRoom_name("888房间");
+        }});
+        rooms.put("999", new Room() {{
+            setRoom_id(888);
+            setRoom_name("999房间");
+        }});
+
+        rooms.forEach((k, room) -> {
+            Thread roomThread = new RoomThread(room);
+            ThreadUtil.execute(roomThread);
+        });
+
+        ThreadUtil.sleep(1000);
+        final Thread t99 = getThreadByName("999");
+        ThreadUtil.sleep(5000);
+        t99.interrupt();
+
+    }
+
+    public static Thread getThreadByName(String name) {
+        for (Thread t : ThreadUtil.getThreads()) {
+            log.info(t.getName() + "==========" + t.getId());
+            if (t.getName().equals(name)) {
+                System.out.println(t.getName());
+                return t;
+            }
+        }
+        return null;
     }
 
 

@@ -6,7 +6,7 @@ import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.User;
 import cn.xu.rondo.entity.dto.UpdateUserDTO;
 import cn.xu.rondo.entity.vo.MsgVo;
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.enums.SwitchEnum;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IRoomService;
@@ -107,7 +107,7 @@ public class UserController extends BaseController {
                 put("token", token);
             }});
         }
-        throw new ApiException(ErrorEnum.ACCOUNT_ERR);
+        throw new ApiException(EE.ACCOUNT_ERR);
     }
 
     @PostMapping("/admin/login")
@@ -124,7 +124,7 @@ public class UserController extends BaseController {
         if (user != null && password.equals(user.getUser_password())) {
             Integer role = user.getRole();
             if (role != 1) {
-                throw new ApiException(ErrorEnum.FORBID);
+                throw new ApiException(EE.FORBID);
             } else {
                 HashMap<String, Object> data = new HashMap<>();
                 data.put("user_id", user.getUser_id());
@@ -136,14 +136,14 @@ public class UserController extends BaseController {
                 }});
             }
         }
-        throw new ApiException(ErrorEnum.ACCOUNT_ERR);
+        throw new ApiException(EE.ACCOUNT_ERR);
     }
 
     /**
      * 获取登录用户信息
      *
-     * @param userId
-     * @return
+     * @param userId 用户id
+     * @return 用户数据
      */
     @PostMapping("/info")
     public JSONObject getMyUserInfo(@UserId Integer userId) {
@@ -158,7 +158,7 @@ public class UserController extends BaseController {
         }
         User user = userService.getById(userId);
         if (user == null) {
-            throw new ApiException(ErrorEnum.ACCOUNT_EMPTY);
+            throw new ApiException(EE.ACCOUNT_EMPTY);
         }
         JSONObject mapUser = JSONObject.parseObject(JSON.toJSONString(user));
 
@@ -177,7 +177,7 @@ public class UserController extends BaseController {
      * 获取其他用户信息
      *
      * @param userId 用户id
-     * @return
+     * @return 用户消息
      */
     @GetMapping("/user_info/{userId}")
     public User getUserInfo(@PathVariable("userId") Integer userId) {
@@ -249,7 +249,7 @@ public class UserController extends BaseController {
                            @RequestParam("mail") @NotBlank String mail,
                            @RequestParam("pwd") @NotBlank String newPwd) {
         String cacheCode = redis.getCacheObject(Constants.mailCode(mail));
-        if (!code.equals(cacheCode)) throw new ApiException(ErrorEnum.MAIL_CODE_ERR);
+        if (!code.equals(cacheCode)) throw new ApiException(EE.MAIL_CODE_ERR);
         final boolean b = userService.updatePwd(newPwd, mail);
         redis.deleteObject(Constants.mailCode(mail));
         return b ? "重置成功，请使用新密码登录" : "重置密码失败";
@@ -275,13 +275,13 @@ public class UserController extends BaseController {
         User user = userService.getById(userId);
         User banUser = userService.getById(banId);
         Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
-        if (banUser == null) throw new ApiException(ErrorEnum.ACCOUNT_EMPTY);
-        if (!user.isAdmin() && userId.equals(room.getRoom_user())) throw new ApiException(ErrorEnum.PERMISSION_LOW);
-        if (userId.equals(banId)) throw new ApiException(ErrorEnum.WHAT_FUCK);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
+        if (banUser == null) throw new ApiException(EE.ACCOUNT_EMPTY);
+        if (!user.isAdmin() && userId.equals(room.getRoom_user())) throw new ApiException(EE.PERMISSION_LOW);
+        if (userId.equals(banId)) throw new ApiException(EE.WHAT_FUCK);
 
         // 对管理员禁止 what fuck
-        if (banUser.isAdmin()) throw new ApiException(ErrorEnum.WHAT_FUCK);
+        if (banUser.isAdmin()) throw new ApiException(EE.WHAT_FUCK);
 
         // cache('online_list_' . $room_id, null); // 暂时不知道作用
 
@@ -318,9 +318,9 @@ public class UserController extends BaseController {
         User user = userService.getById(userId);
         User banUser = userService.getById(banId);
         Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
-        if (banUser == null) throw new ApiException(ErrorEnum.ACCOUNT_EMPTY);
-        if (!user.isAdmin() && userId.equals(room.getRoom_user())) throw new ApiException(ErrorEnum.PERMISSION_LOW);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
+        if (banUser == null) throw new ApiException(EE.ACCOUNT_EMPTY);
+        if (!user.isAdmin() && userId.equals(room.getRoom_user())) throw new ApiException(EE.PERMISSION_LOW);
 
         userService.removeBan(roomId, banId);
 
@@ -350,7 +350,7 @@ public class UserController extends BaseController {
         if (cacheList != null && cacheList.size() != 0) return cacheList;
 
         Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         ConcurrentHashMap<String, Session> roomOnline = IMSocket.CHATMAP.get(String.valueOf(roomId));
         if (roomOnline == null) return new Vector<>();
         Set<String> ids = roomOnline.keySet().stream().map(String::valueOf).collect(Collectors.toSet());

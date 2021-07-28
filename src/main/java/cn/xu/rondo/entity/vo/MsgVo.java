@@ -9,8 +9,9 @@ import lombok.Setter;
 @Setter
 public class MsgVo {
     public static final String JOIN = "join"; // 加入房间
-    public static final String PUSH = "push";
-    public static final String CLEAR = "clear";
+    public static final String PUSH = "push";//顶歌
+    public static final String CLEAR = "clear";// 清除消息
+    public static final String TOUCH = "touch"; //摸一摸
     private String type;
     private JSONObject data;
 
@@ -40,9 +41,9 @@ public class MsgVo {
 
     public static final String SYSTEM = "system"; //,"系统消息"),
 
-    public static final String StringTEXT = "text"; //"文字消息"),
+    public static final String TEXT = "text"; //"文字消息"),
 
-    public static final String StringIMG = "img"; //,"图片消息"),
+    public static final String IMG = "img"; //,"图片消息"),
 
     public static final String LINK = "link"; // "链接消息"),
 

@@ -1,7 +1,7 @@
 package cn.xu.rondo.response;
 
 
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import lombok.Getter;
 
 @Getter
@@ -35,8 +35,8 @@ public class Response<T> {
 
 
     public Response(T data) {
-        this.code = ErrorEnum.SUCCESS.getCode();
-        this.msg = ErrorEnum.SUCCESS.getMsg();
+        this.code = EE.SUCCESS.getCode();
+        this.msg = EE.SUCCESS.getMsg();
         this.data = data;
     }
 

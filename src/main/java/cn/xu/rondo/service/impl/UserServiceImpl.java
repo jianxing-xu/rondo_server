@@ -3,14 +3,13 @@ package cn.xu.rondo.service.impl;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpUtil;
 import cn.xu.rondo.entity.User;
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.mapper.UserMapper;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IUserService;
 import cn.xu.rondo.utils.Common;
 import cn.xu.rondo.utils.Constants;
 import cn.xu.rondo.utils.RedisUtil;
-import cn.xu.rondo.utils.ServletUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.slf4j.Logger;
@@ -87,8 +86,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public boolean updatePwd(String newPwd, String oldPwd, Integer userId) {
         User user = userMapper.selectById(userId);
-        if (user == null) throw new ApiException(ErrorEnum.ACCOUNT_EMPTY);
-        if (!user.verifyPwd(oldPwd)) throw new ApiException(ErrorEnum.PWD_ERROR);
+        if (user == null) throw new ApiException(EE.ACCOUNT_EMPTY);
+        if (!user.verifyPwd(oldPwd)) throw new ApiException(EE.PWD_ERROR);
         user.setUser_password(newPwd);
         user.encodePwd();
         userMapper.updateById(user);
@@ -100,7 +99,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         wrapper.eq("user_account", mail);
         User user = userMapper.selectOne(wrapper);
-        if (user == null) throw new ApiException(ErrorEnum.ACCOUNT_EMPTY);
+        if (user == null) throw new ApiException(EE.ACCOUNT_EMPTY);
         user.setUser_password(newPwd);
         user.encodePwd();
         userMapper.updateById(user);

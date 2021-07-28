@@ -9,7 +9,7 @@ import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.Song;
 import cn.xu.rondo.entity.User;
 import cn.xu.rondo.entity.vo.*;
-import cn.xu.rondo.enums.ErrorEnum;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.Response;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IRoomService;
@@ -113,7 +113,7 @@ public class SongController extends BaseController {
                             @RequestParam("room_id") @NotNull Integer roomId,
                             @UserId Integer userId) {
         Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         boolean flag = songService.removeByMap(new HashMap<String, Object>() {{
             put("song_mid", mid);
             put("song_user", userId);
@@ -137,9 +137,9 @@ public class SongController extends BaseController {
         wrapper.eq("song_user", userId);
         wrapper.eq("song_mid", mid);
         Song song = songService.getOne(wrapper);
-        if (song != null) throw new ApiException(ErrorEnum.EXIST_FAV);
+        if (song != null) throw new ApiException(EE.EXIST_FAV);
         SearchVo searchVo = redis.getCacheObject(Constants.SongDetail + mid);
-        if (searchVo == null) throw new ApiException(ErrorEnum.SONG_QUERY_ERR);
+        if (searchVo == null) throw new ApiException(EE.SONG_QUERY_ERR);
 
         Song newSong = new Song();
         newSong.setSong_mid(searchVo.getMid());
@@ -153,7 +153,7 @@ public class SongController extends BaseController {
         songService.save(newSong);
 
         User user = userService.getById(userId);
-        if (user == null) throw new ApiException(ErrorEnum.INFO_QUERY_ERR);
+        if (user == null) throw new ApiException(EE.INFO_QUERY_ERR);
         //TODO: sendWebsocketMsg 歌曲收藏成功系统消息通知 OK!
         JSONObject data = new JSONObject();
         data.put("content", user.getUser_name() + "收藏了当前歌曲");
@@ -198,17 +198,17 @@ public class SongController extends BaseController {
                        @RequestParam("room_id") @NotNull Integer roomId,
                        @UserId Integer userId) {
         Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
-        if (room.getRoom_type() == 4) throw new ApiException(ErrorEnum.BAN_PLAY);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
+        if (room.getRoom_type() == 4) throw new ApiException(EE.BAN_PLAY);
 
         User user = userService.getById(userId);
         //判断用户是否有权限直接播放歌曲
         if (!user.isAdmin() && !room.getRoom_user().equals(user.getUser_id()) && !user.isVip())
-            throw new ApiException(ErrorEnum.PERMISSION_LOW);
+            throw new ApiException(EE.PERMISSION_LOW);
 
         // 从 redis 中取到歌曲详情
         SearchVo detail = songService.getSongDetail(mid);
-        if (detail == null) throw new ApiException(ErrorEnum.SONG_QUERY_ERR);
+        if (detail == null) throw new ApiException(EE.SONG_QUERY_ERR);
         // 将歌曲置顶,歌曲队列中的 对象为 SongQueueVo
         boolean isPushed = false;
         List<SongQueueVo> queue = redis.getCacheList(Constants.SongList + roomId);
@@ -282,12 +282,12 @@ public class SongController extends BaseController {
                             @RequestParam(value = "at", required = false) Integer at,
                             @UserId Integer userId) {
         Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
-        if (room.getRoom_type() != 1 && room.getRoom_type() != 4) throw new ApiException(ErrorEnum.BAN_PLAY);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
+        if (room.getRoom_type() != 1 && room.getRoom_type() != 4) throw new ApiException(EE.BAN_PLAY);
         User user = userService.getById(userId);
         // 从 redis 中取到歌曲详情
         SearchVo detail = songService.getSongDetail(mid);
-        if (detail == null) throw new ApiException(ErrorEnum.INFO_QUERY_ERR);
+        if (detail == null) throw new ApiException(EE.INFO_QUERY_ERR);
 
         //TODO: 判断 detail[mid] 尝试同步图片
         redis.setCacheObject(Constants.SongDetail + mid, detail);
@@ -297,14 +297,14 @@ public class SongController extends BaseController {
         if (at != null) {
             atUser = userService.getById(at);
             if (atUser != null) {
-                if (userId.equals(atUser.getUser_id())) throw new ApiException(ErrorEnum.AT_ME);
+                if (userId.equals(atUser.getUser_id())) throw new ApiException(EE.AT_ME);
             } else {
-                throw new ApiException(ErrorEnum.AT_INFO_ERR);
+                throw new ApiException(EE.AT_INFO_ERR);
             }
         }
 
         boolean isBan = Common.checkShutdown(1, roomId, userId);
-        if (isBan) throw new ApiException(ErrorEnum.BAN_USER_ADD_SONG);
+        if (isBan) throw new ApiException(EE.BAN_USER_ADD_SONG);
 
         List<SongQueueVo> queue = redis.getCacheList(Constants.SongList + roomId);
         if (queue == null) queue = new ArrayList<>();
@@ -326,7 +326,7 @@ public class SongController extends BaseController {
 
         //权限判断
         if (!user.isAdmin() && !user.isVip() && !userId.equals(room.getRoom_user())) {
-            if (room.getRoom_addsong() == 1) throw new ApiException(ErrorEnum.ONLY_ROOM_USER);
+            if (room.getRoom_addsong() == 1) throw new ApiException(EE.ONLY_ROOM_USER);
             Long lastTime = redis.getCacheObject(Constants.AddSongLastTime + userId);
             if (lastTime != null) {
                 long needWaitTime = cd - (Common.time() - lastTime);
@@ -445,17 +445,17 @@ public class SongController extends BaseController {
 
         Room room = roomService.getById(roomId);
         User user = userService.getById(userId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         SearchVo songDetail = songService.getSongDetail(mid);
-        if (songDetail == null) throw new ApiException(ErrorEnum.SONG_QUERY_ERR);
+        if (songDetail == null) throw new ApiException(EE.SONG_QUERY_ERR);
 
         // 取正在播放的歌曲
         SongQueueVo now = redis.getCacheObject(Constants.SongNow + roomId);
-        if (now == null) throw new ApiException(ErrorEnum.NOT_NOW_PLAY);
+        if (now == null) throw new ApiException(EE.NOT_NOW_PLAY);
 
         //既不是管理员，也不是vip，也不是房主，还不是自己点的歌 就得投票
         if (!user.isAdmin() && !user.isVip() && !userId.equals(room.getRoom_user()) && !userId.equals(now.getUser().getUser_id())) {
-            if (!room.isOpenVotePass()) throw new ApiException(ErrorEnum.NO_VOTE_PASS);
+            if (!room.isOpenVotePass()) throw new ApiException(EE.NO_VOTE_PASS);
             // 获取在线人数
             Integer onlineCount = room.getRoom_online();
             int targetCount = room.getRoom_votepercent() * onlineCount / 100 + 1;
@@ -559,13 +559,13 @@ public class SongController extends BaseController {
                     redis.expire(Constants.SongLrcKey + mid, 3600, TimeUnit.SECONDS);
                     return jsonArray;
                 } else {
-                    throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+                    throw new ApiException(EE.KW_QUERY_ERR);
                 }
             }
         } catch (Exception e) {
-            throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+            throw new ApiException(EE.KW_QUERY_ERR);
         }
-        throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+        throw new ApiException(EE.KW_QUERY_ERR);
     }
 
 
@@ -582,9 +582,9 @@ public class SongController extends BaseController {
                          @UserId Integer userId) {
         Room room = roomService.getById(roomId);
         User user = userService.getById(userId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         SearchVo songDetail = songService.getSongDetail(mid);
-        if (songDetail == null) throw new ApiException(ErrorEnum.SONG_QUERY_ERR);
+        if (songDetail == null) throw new ApiException(EE.SONG_QUERY_ERR);
 
         List<SongQueueVo> queue = redis.getCacheList(Constants.SongList + roomId);
         if (queue == null) queue = new ArrayList<>();
@@ -599,7 +599,7 @@ public class SongController extends BaseController {
                 // 管理者身份判断
                 if (!user.isVip() && !user.isAdmin() && !userId.equals(room.getRoom_user())) {
                     // 顶自己的歌
-                    if (userId.equals(song.getUser().getUser_id())) throw new ApiException(ErrorEnum.PUSH_SELF_ERR);
+                    if (userId.equals(song.getUser().getUser_id())) throw new ApiException(EE.PUSH_SELF_ERR);
                 }
                 // 是管理者 或 vip
                 pushSong = song;
@@ -607,11 +607,11 @@ public class SongController extends BaseController {
                 break;
             }
         }
-        if (pushSong == null) throw new ApiException(ErrorEnum.SONG_QUERY_ERR);
+        if (pushSong == null) throw new ApiException(EE.SONG_QUERY_ERR);
 
         // 房间日顶歌限额
         Integer pushCount = room.getRoom_pushdaycount();
-        if (pushCount < 0) throw new ApiException(ErrorEnum.BANED_PUSH);
+        if (pushCount < 0) throw new ApiException(EE.BANED_PUSH);
         // 用户顶歌次数
         Integer pushCache = redis.getCacheObject(Constants.UserPushCount(DateUtil.today(), userId));
         if (pushCache == null) pushCache = 0;
@@ -620,7 +620,7 @@ public class SongController extends BaseController {
         if (!user.isVip() && !user.isAdmin() && !userId.equals(room.getRoom_user())) {
             Long pushLastTime = redis.getCacheObject(Constants.PushLastTime + userId);
             if (pushLastTime == null) pushLastTime = 0L;
-            if (pushCache >= pushCount) throw new ApiException(ErrorEnum.PUSH_OUT);
+            if (pushCache >= pushCount) throw new ApiException(EE.PUSH_OUT);
             // 判断 顶歌CD
             if (Common.time() - pushLastTime < pushCd) {
                 int minus = (pushCd - (Common.time().intValue() - pushLastTime.intValue())) / 60;
@@ -667,9 +667,9 @@ public class SongController extends BaseController {
                          @UserId Integer userId) {
         Room room = roomService.getById(roomId);
         User user = userService.getById(userId);
-        if (room == null) throw new ApiException(ErrorEnum.ROOM_NOT_FOUND);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         SearchVo songDetail = songService.getSongDetail(mid);
-        if (songDetail == null) throw new ApiException(ErrorEnum.SONG_QUERY_ERR);
+        if (songDetail == null) throw new ApiException(EE.SONG_QUERY_ERR);
 
         List<SongQueueVo> queue = redis.getCacheList(Constants.SongList + roomId);
         if (queue == null) queue = new ArrayList<>();
@@ -682,11 +682,11 @@ public class SongController extends BaseController {
                 break;
             }
         }
-        if (removeSong == null) throw new ApiException(ErrorEnum.REMOVE_ERR);
+        if (removeSong == null) throw new ApiException(EE.REMOVE_ERR);
 
         // 管理员，vip，自己点的不可以删
         if (!user.isAdmin() && !user.isVip() && !userId.equals(removeSong.getUser().getUser_id())) {
-            throw new ApiException(ErrorEnum.PERMISSION_LOW);
+            throw new ApiException(EE.PERMISSION_LOW);
         }
 
         redis.setCacheListForDel(Constants.SongList + roomId, queue);
@@ -716,7 +716,7 @@ public class SongController extends BaseController {
         String cacheUrl = redis.getCacheObject(Constants.SongPlayUrl + mid);
         if (cacheUrl != null && StringUtils.isNotEmpty(cacheUrl)) return cacheUrl;
         String url = kwUtils.getPlayUrl(mid);
-        if (url == null) throw new ApiException(ErrorEnum.KW_QUERY_ERR);
+        if (url == null) throw new ApiException(EE.KW_QUERY_ERR);
         //TODO: BBBUG 对获取的url加入了 wait_download_list 队列进行下载到本地处理，这里暂时不做处理
         redis.setCacheObject(Constants.SongPlayUrl + mid, url);
         redis.expire(Constants.SongPlayUrl, 1, TimeUnit.MINUTES);

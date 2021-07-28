@@ -1,5 +1,6 @@
 package cn.xu.rondo.entity;
 
+import cn.hutool.http.HtmlUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -102,7 +103,7 @@ public class Message implements Serializable {
     }
 
     public void setMessage_content(String message_content) {
-        this.message_content = message_content;
+        this.message_content = HtmlUtil.filter(message_content);
     }
 
     public Integer getMessage_status() {
