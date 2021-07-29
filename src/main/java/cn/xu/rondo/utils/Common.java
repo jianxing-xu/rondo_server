@@ -4,7 +4,10 @@ import cn.hutool.core.util.EscapeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +23,42 @@ public class Common {
     public static final Logger log = LoggerFactory.getLogger(Common.class);
 
     public static RedisUtil redis = SpringUtils.getBean(RedisUtil.class);
+
+    public static byte[] readFileByUrl(String urlStr) {
+        byte[] arr = null;
+        try {
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            //设置超时间为3秒
+            conn.setConnectTimeout(3 * 1000);
+            //防止屏蔽程序抓取而返回403错误
+            conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+            //得到输入流
+            InputStream inputStream = conn.getInputStream();
+            arr = readInputStream(inputStream);
+        } catch (Exception e) {
+            log.error("通过url地址获取文本内容失败 Exception：" + e);
+        }
+        return arr;
+    }
+
+    /**
+     * 从输入流中获取字符串
+     *
+     * @param inputStream
+     * @return
+     * @throws IOException
+     */
+    public static byte[] readInputStream(InputStream inputStream) throws IOException {
+        byte[] buffer = new byte[1024];
+        int len;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        while ((len = inputStream.read(buffer)) != -1) {
+            bos.write(buffer, 0, len);
+        }
+        bos.close();
+        return bos.toByteArray();
+    }
 
     // 根据线程名称获取线程对象
     public static Thread getThreadByName(String name) {

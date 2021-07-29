@@ -25,15 +25,15 @@ public class RoomThread extends Thread {
     public static SongTask songTask = SpringUtils.getBean(SongTask.class);
 
     // 线程标志位 需改为true时退出线程
-    public volatile boolean exit = false;
+    public volatile boolean exited = false;
 
-    public void exited() {
-        exit = true;
+    public void exit() {
+        exited = true;
     }
 
     @Override
     public void run() {
-        while (!exit) {
+        while (!exited) {
             Room room = SongTask.rooms.get(roomId);
             log.info("----------------------------------------------------");
             try {
@@ -44,6 +44,7 @@ public class RoomThread extends Thread {
                     // 当前时间戳小于 歌曲的开始播放时间 + 歌曲的长度表示歌曲还没有播放完，正在播放中
                     if (Common.time() < songQueueVo.getSong().getLength() + songQueueVo.getSince()) {
                         log.info(String.format("房间：%s 正在播放 %s 中,已经播放了%s秒了", room.getRoom_name(), HtmlUtil.escape(songQueueVo.getSong().getName()), Common.time() - songQueueVo.getSince()));
+                        songTask.getSongByRobot(roomId);
                         continue;
                     }
 
@@ -108,7 +109,11 @@ public class RoomThread extends Thread {
             } catch (Exception e) {
                 // 业务异常
                 e.printStackTrace();
-                songTask.redis.setCacheObject(Constants.SongNow + room.getRoom_id(), null);
+                try {
+                    songTask.redis.setCacheObject(Constants.SongNow + room.getRoom_id(), null);
+                } catch (Exception innerE) {
+                    log.error("中断程序redis异常");
+                }
             }
 
         }

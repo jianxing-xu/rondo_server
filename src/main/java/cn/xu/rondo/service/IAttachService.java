@@ -19,7 +19,11 @@ public interface IAttachService extends IService<Attach> {
 
     String upload(MultipartFile file, String dir) throws IOException;
 
+    String uploadImg(MultipartFile file, String dir, int type) throws IOException;
+
     String getDayPath();
 
     Attach checkFileExist(String sha);
+
+    void checkMusicType(MultipartFile file);
 }

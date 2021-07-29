@@ -340,7 +340,7 @@ public class RoomController extends BaseController {
             final RoomThread roomThread = (RoomThread) Common.getThreadByName(Constants.RoomThreadPREFIX + room_id);
             if (roomThread != null) {
                 //roomThread.interrupt(); // 调用 interrupt 停止线程 可能会导致redis异常等
-                roomThread.exited(); // 设置退出循环标志位停止线程 这中更安全一点
+                roomThread.exit(); // 设置退出循环标志位停止线程 更安全一点 会把run执行完全
             }
         }
         return "删除成功!";

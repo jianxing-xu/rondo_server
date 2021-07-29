@@ -57,7 +57,8 @@ public enum EE {
     NOT_SUP_SEND_PIC(1047, "禁止在18:00~9:00发送自定义上传图片"),
     NOT_MSG_TYPE(1048, "未知消息类型"),
     MO_ME(1049, "我摸我自己，哎，就是玩儿！"),
-    OFTEN_MO(1050, "摸的太快啦，稍后在摸！");
+    OFTEN_MO(1050, "摸的太快啦，稍后在摸！"),
+    MUSIC_MAX_20(1051, "上传歌大小最大20MB");
 
     private Integer code;
     private String msg;

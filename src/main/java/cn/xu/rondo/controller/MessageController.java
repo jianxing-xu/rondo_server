@@ -1,6 +1,7 @@
 package cn.xu.rondo.controller;
 
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HtmlUtil;
 import cn.hutool.http.HttpUtil;
 import cn.xu.rondo.entity.Keywords;
@@ -336,6 +337,32 @@ public class MessageController extends BaseController {
         data.put("at", userData(atUser));
         String msg = new MsgVo(MsgVo.TOUCH, data).build();
         sendMsg(roomId, msg);
+
+        // 摸一摸彩蛋
+        boolean isRobotEnable = false;
+        // 如果摸的是机器人
+        if (atUserId != null && atUserId.equals(1)) {
+            int random = RandomUtil.randomInt(0, 100);
+            // TODO：摸机器人触发概率
+            isRobotEnable = !Common.checkShutdown(0, roomId, 1) && random > 10;
+        }
+        if (isRobotEnable) {
+            User robotInfo = userService.getById(1);
+            String content = Constants.touch_machine[RandomUtil.randomInt(0, Constants.touch_machine.length - 1)];
+            JSONObject macMsg = new JSONObject();
+            macMsg.put("content", content);
+            macMsg.put("where", roomId);
+            macMsg.put("at", new JSONObject() {{
+                put("user_id", userId);
+                put("user_name", user.getUser_name());
+            }});
+            macMsg.put("message_id", 0);
+            macMsg.put("resource", content);
+            robotInfo.setUser_password(null);
+            macMsg.put("user", robotInfo);
+            sendMsg(roomId, new MsgVo(MsgVo.TEXT, macMsg).build());
+        }
+
         return "摸好了！";
     }
 

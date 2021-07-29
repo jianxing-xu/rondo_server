@@ -56,6 +56,8 @@ public class KwUtils {
                 vo.setSinger((String) song.get("artist"));
                 return vo;
             }
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
             return null;

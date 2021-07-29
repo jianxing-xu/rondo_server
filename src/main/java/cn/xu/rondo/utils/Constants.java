@@ -155,6 +155,7 @@ public class Constants {
         return mailCodePre + key;
     }
 
+
     /**
      * token有效时间
      */
@@ -162,6 +163,22 @@ public class Constants {
 
     // hu tool 加密签名工具
     public static SymmetricCrypto aes = new SymmetricCrypto(SymmetricAlgorithm.AES, "xxuujyiuaannxyiu".getBytes());
+
+
+    public static String[] touch_machine = {
+            "你是谁，为什么要摸我！",
+            "铁疙瘩摸着舒服吗？",
+            "卧槽！你~~",
+            "请不要对我毛手毛脚的！",
+            "虽然你努力的样子很可爱，但是这里还是让我来吧！",
+            "不要停下来！",
+            "不要应为可爱就一直碰！",
+            "你真的好残酷啊！",
+            "太乱来的话我可要调教你了哦！",
+            "啊对不起，我忘了你的脑瓜也不好使！",
+            "今晚绝对不会然你睡着的！",
+            "WOW~~"
+    };
 
 
 }

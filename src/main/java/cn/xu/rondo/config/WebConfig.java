@@ -19,7 +19,12 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/user/login", "/res/**", "/common/**")
                 .excludePathPatterns("/user/pwd/**")
                 .excludePathPatterns("favicon.ico")
-                .excludePathPatterns("/message/list/**");
+                .excludePathPatterns("/message/list/**")
+                .excludePathPatterns("/badge/badge/**", "/song/playUrl/**")
+
+                // 暂时 放行
+                .excludePathPatterns("/attach/**", "/user/**", "/song/**", "/room/**", "/message/**")
+        ;
     }
 
     @Override

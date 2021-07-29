@@ -1,7 +1,7 @@
 server:
   servlet:
     context-path: /
-
+  port: 8080
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -46,7 +46,7 @@ spring:
 #mybatis-plus
 mybatis-plus:
   configuration:
-    #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: false #取消驼峰
     use-generated-keys: true
 
@@ -57,7 +57,13 @@ rondo:
   static-url: localhost:8080/res/
   # upload-path 本机以下配置，在linux中需要重新配置：/home/rondo/uploads/
   upload-path: /Users/jackson/Desktop/MyProject/BackEnd/rondo/uploads/
-  avatar-path: ${rondo.upload-path}avatar/
+  avatar-path: avatar/
+  chat-path: chat/
+  music-path: music/
+
+  upload-img-max: 1MB
+  upload-music-max: 20MB
+
   ws:
     path: /ws
     port: 8081

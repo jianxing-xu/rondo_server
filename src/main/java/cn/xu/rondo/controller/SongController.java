@@ -1,6 +1,7 @@
 package cn.xu.rondo.controller;
 
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HtmlUtil;
@@ -16,11 +17,7 @@ import cn.xu.rondo.service.IRoomService;
 import cn.xu.rondo.service.ISongService;
 import cn.xu.rondo.service.IUserService;
 import cn.xu.rondo.socket.IMSocket;
-import cn.xu.rondo.utils.Common;
-import cn.xu.rondo.utils.Constants;
-import cn.xu.rondo.utils.KwUtils;
-import cn.xu.rondo.utils.RedisUtil;
-import cn.xu.rondo.utils.StringUtils;
+import cn.xu.rondo.utils.*;
 import cn.xu.rondo.utils.params_resolver.UserId;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -30,11 +27,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -66,6 +67,9 @@ public class SongController extends BaseController {
     KwUtils kwUtils;
     @Autowired
     IMSocket imSocket;
+
+    @Value("${server.port}")
+    String port;
 
     /**
      * 搜索歌曲
@@ -278,9 +282,9 @@ public class SongController extends BaseController {
      */
     @PostMapping("/add")
     public Response<String> addSong(@RequestParam("mid") @NotNull Long mid,
-                            @RequestParam("room_id") @NotNull Integer roomId,
-                            @RequestParam(value = "at", required = false) Integer at,
-                            @UserId Integer userId) {
+                                    @RequestParam("room_id") @NotNull Integer roomId,
+                                    @RequestParam(value = "at", required = false) Integer at,
+                                    @UserId Integer userId) {
         Room room = roomService.getById(roomId);
         if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         if (room.getRoom_type() != 1 && room.getRoom_type() != 4) throw new ApiException(EE.BAN_PLAY);
@@ -578,8 +582,8 @@ public class SongController extends BaseController {
      */
     @PostMapping("/push")
     public Response<String> push(@RequestParam("mid") @NotNull Long mid,
-                         @RequestParam("room_id") @NotNull Integer roomId,
-                         @UserId Integer userId) {
+                                 @RequestParam("room_id") @NotNull Integer roomId,
+                                 @UserId Integer userId) {
         Room room = roomService.getById(roomId);
         User user = userService.getById(userId);
         if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
@@ -711,16 +715,22 @@ public class SongController extends BaseController {
      * @param mid 歌曲id
      * @return 歌曲URL
      */
-    @GetMapping("/playUrl")
-    public String getPlayUrl(@RequestParam("mid") @NotNull Long mid) {
+    @GetMapping("/playUrl/{mid}")
+    public void getPlayUrl(@PathVariable("mid") @NotNull Long mid,
+                           HttpServletResponse response,
+                           HttpServletRequest request) throws IOException {
         String cacheUrl = redis.getCacheObject(Constants.SongPlayUrl + mid);
-        if (cacheUrl != null && StringUtils.isNotEmpty(cacheUrl)) return cacheUrl;
+        if (cacheUrl != null && StringUtils.isNotEmpty(cacheUrl)) {
+            response.sendRedirect(cacheUrl);
+            return;
+        }
         String url = kwUtils.getPlayUrl(mid);
         if (url == null) throw new ApiException(EE.KW_QUERY_ERR);
         //TODO: BBBUG 对获取的url加入了 wait_download_list 队列进行下载到本地处理，这里暂时不做处理
+        //TODO: 自己上传歌曲判断
         redis.setCacheObject(Constants.SongPlayUrl + mid, url);
-        redis.expire(Constants.SongPlayUrl, 1, TimeUnit.MINUTES);
-        return url;
+        redis.expire(Constants.SongPlayUrl + mid, 1, TimeUnit.MINUTES);
+        response.sendRedirect(url);
     }
 
     /**
@@ -738,9 +748,6 @@ public class SongController extends BaseController {
         if (queue == null) queue = new ArrayList<>();
         return queue;
     }
-
-//    @GetMapping（"/now")
-//    public
 }
 
 
