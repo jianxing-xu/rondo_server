@@ -9,9 +9,9 @@ import lombok.Data;
 public class BaseDTO {
     private Integer userId; // 用户id
 
-    private Integer pageNum = 20;
+    private Integer pageNum = 1;
 
-    private Integer pageSize = 1;
+    private Integer pageSize = 20;
 
     private Long startAt;  // 开始时间
 

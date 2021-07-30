@@ -67,9 +67,9 @@ public class UserController extends BaseController {
 
 
     @PostMapping("/login")
-    public Response login(@NotBlank @RequestParam("account") String account,
-                          @NotBlank @RequestParam("password") String password,
-                          @RequestParam("plat") String plat) {
+    public JSONObject login(@NotBlank @RequestParam("account") String account,
+                            @NotBlank @RequestParam("password") String password,
+                            @RequestParam("plat") String plat) {
         String code = "" + redis.getCacheObject(Constants.mailCode(account)); // TODO: 此处从redis中获取邮箱验证码
         // 邮箱登录
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -100,19 +100,18 @@ public class UserController extends BaseController {
             map.put("user_id", user.getUser_id());
             map.put("user_account", account);
             String token = JWTUtils.createToken(map);
-
             // 返回token
             redis.deleteObject(Constants.mailCode(account));
-            return new Response(new HashMap<String, String>() {{
+            return new JSONObject() {{
                 put("token", token);
-            }});
+            }};
         }
         throw new ApiException(EE.ACCOUNT_ERR);
     }
 
     @PostMapping("/admin/login")
-    public Response loginAdmin(@NotBlank @RequestParam("account") String account,
-                               @NotBlank @RequestParam("password") String password) {
+    public JSONObject loginAdmin(@NotBlank @RequestParam("account") String account,
+                                 @NotBlank @RequestParam("password") String password) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         if (ReUtil.isMatch("^[1-9][0-9]*$", account)) {
             queryWrapper.eq("user_id", account);
@@ -131,9 +130,9 @@ public class UserController extends BaseController {
                 data.put("user_account", user.getUser_account());
                 String token = JWTUtils.createToken(data);
                 // 返回token
-                return new Response(new HashMap<String, String>() {{
+                return new JSONObject() {{
                     put("token", token);
-                }});
+                }};
             }
         }
         throw new ApiException(EE.ACCOUNT_ERR);
@@ -311,7 +310,7 @@ public class UserController extends BaseController {
      * @param userId 操作用户id
      * @return 消息
      */
-    @PostMapping("/shutdown/{roomId}/{banId}")
+    @PostMapping("/removeBan/{roomId}/{banId}")
     public String removeBan(@PathVariable("roomId") Integer roomId,
                             @PathVariable("banId") Integer banId,
                             @UserId Integer userId) {
@@ -337,13 +336,14 @@ public class UserController extends BaseController {
 
     /**
      * 获取在线用户列表
+     *
      * @param roomId 房间id
-     * @param sync 'yes' 同步到数据库
+     * @param sync   'yes' 同步到数据库
      * @return 用户json列表
      */
     @GetMapping("/online/{roomId}/{sync}")
     public List<JSONObject> online(@PathVariable("roomId") Integer roomId,
-                                   @PathVariable(value = "sync",required = false) String sync) {
+                                   @PathVariable(value = "sync", required = false) String sync) {
 
         // 取到缓存就返回
         List<JSONObject> cacheList = redis.getCacheList(Constants.OnlineList + roomId);

@@ -31,6 +31,7 @@ import java.util.List;
  * @since 2021-07-17
  */
 @Slf4j
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/attach")
 public class AttachController extends BaseController {
@@ -158,7 +159,7 @@ public class AttachController extends BaseController {
 
 
     //==TODO:后台接口==============================================
-    @GetMapping("/all")
+    @PostMapping("/all")
     public QueryVo<Attach> all(@RequestBody QueryAttachDTO dto) {
         Page<Attach> pager = new Page<>(dto.getPageNum(), dto.getPageSize());
         Attach query = new Attach();
@@ -168,16 +169,12 @@ public class AttachController extends BaseController {
 
         QueryWrapper<Attach> wrapper = new QueryWrapper<>(query);
         final String sizePattern = dto.getSizePattern();
-//        if (sizePattern != null) {
-//            final String[] split = sizePattern.split(",");
-//            log.warn("START: " + split[0]);
-//            log.warn("START: " + split[1]);
-//            wrapper.gt("attach_size", Integer.valueOf(split[0]));
-//            wrapper.lt("attach_size", Integer.valueOf(split[1]));
-//        }
+        if (sizePattern != null) {
+            wrapper.gt("attach_size", dto.minSize());
+            wrapper.lt("attach_size", dto.maxSize());
+        }
         final Page<Attach> page = attachService.page(pager, wrapper);
         List<Attach> records = page.getRecords();
-        // TODO: 这里只执行 SELECT COUNT(*) 没有获取到记录BUG
         long total = page.getTotal();
         final QueryVo<Attach> vo = new QueryVo<>();
         vo.setList(records);

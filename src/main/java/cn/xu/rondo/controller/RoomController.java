@@ -68,12 +68,10 @@ public class RoomController extends BaseController {
      * @return 响应对象
      */
     @GetMapping("/hot")
-    public Response<List<Room>> getHotRooms() {
+    public List<Room> getHotRooms() {
         // 从redis中取，取到就返回
         List<Room> roomList = redis.getCacheList(Constants.roomList);
-        if (roomList != null) {
-            return new Response<>(roomList);
-        }
+        if (roomList != null && roomList.size() != 0) return roomList;
         // 取不到就查询
         QueryWrapper<Room> wrap = new QueryWrapper<>();
         wrap.orderBy(true, false, "room_order");//排序值降序
@@ -84,7 +82,7 @@ public class RoomController extends BaseController {
         redis.setCacheList(Constants.roomList, list);
         // 设置过期时间
         redis.expire(Constants.roomList, 3, TimeUnit.MINUTES);
-        return new Response<>(list);
+        return list;
     }
 
     /**

@@ -108,16 +108,12 @@ public class SongController extends BaseController {
      * 删除用户已点歌单歌曲
      *
      * @param mid    歌曲mid
-     * @param roomId 房间id
      * @param userId 用户id
      * @return 消息
      */
-    @DeleteMapping("/delete")
-    public String delMySong(@RequestParam("mid") @NotNull Integer mid,
-                            @RequestParam("room_id") @NotNull Integer roomId,
+    @DeleteMapping("/del/{mid}")
+    public String delMySong(@PathVariable("mid") @NotNull Integer mid,
                             @UserId Integer userId) {
-        Room room = roomService.getById(roomId);
-        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         boolean flag = songService.removeByMap(new HashMap<String, Object>() {{
             put("song_mid", mid);
             put("song_user", userId);
@@ -540,8 +536,8 @@ public class SongController extends BaseController {
      * @param mid 歌曲id
      * @return 歌词数组
      */
-    @GetMapping("/lrc")
-    public JSONArray getLrc(@RequestParam("mid") @NotNull Long mid) {
+    @GetMapping("/lrc/{mid}")
+    public JSONArray getLrc(@PathVariable("mid") @NotNull Long mid) {
 
         List<LrcLine> lyricList = redis.getCacheList(Constants.SongLrcKey + mid);
         if (lyricList != null && lyricList.size() != 0) {
@@ -665,7 +661,7 @@ public class SongController extends BaseController {
      * @param roomId 房间id
      * @return 成功消息
      */
-    @PostMapping("/remove")
+    @PostMapping("/removeForQueue")
     public String remove(@RequestParam("mid") @NotNull Long mid,
                          @RequestParam("room_id") @NotNull Integer roomId,
                          @UserId Integer userId) {
@@ -717,8 +713,7 @@ public class SongController extends BaseController {
      */
     @GetMapping("/playUrl/{mid}")
     public void getPlayUrl(@PathVariable("mid") @NotNull Long mid,
-                           HttpServletResponse response,
-                           HttpServletRequest request) throws IOException {
+                           HttpServletResponse response) throws IOException {
         String cacheUrl = redis.getCacheObject(Constants.SongPlayUrl + mid);
         if (cacheUrl != null && StringUtils.isNotEmpty(cacheUrl)) {
             response.sendRedirect(cacheUrl);
@@ -740,8 +735,8 @@ public class SongController extends BaseController {
      * @param userId 用户id
      * @return 房间歌曲队列
      */
-    @GetMapping("/queueSongs")
-    public List<SongQueueVo> getQueue(@RequestParam("room_id") @NotNull Integer roomId,
+    @GetMapping("/queueSongs/{room_id}")
+    public List<SongQueueVo> getQueue(@PathVariable("room_id") @NotNull Integer roomId,
                                       @UserId Integer userId) {
         log.info("尝试获取临时用户ID：" + userId);
         List<SongQueueVo> queue = redis.getCacheList(Constants.SongList + roomId);

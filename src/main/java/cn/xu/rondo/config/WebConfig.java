@@ -4,6 +4,7 @@ import cn.xu.rondo.interceptor.TokenInterceptor;
 import cn.xu.rondo.utils.params_resolver.UserIdResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -23,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/badge/badge/**", "/song/playUrl/**")
 
                 // 暂时 放行
-                .excludePathPatterns("/attach/**", "/user/**", "/song/**", "/room/**", "/message/**")
+                .excludePathPatterns("/**")
         ;
     }
 
