@@ -42,7 +42,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     RedisUtil redis;
 
     @Override
-    public User reByLogin(String account, String name) {
+    public User reByLogin(String account, String name, String plat) {
         User user = new User();
         user.setUser_account(account);
         user.setUser_password("123456");
@@ -59,6 +59,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setUser_updatetime((int) (System.currentTimeMillis() / 1000));
         user.setUser_touchtip("大帅比");
         user.setRole(0);
+        user.setUser_device(plat);
         try {
             String content = HttpUtil.get("http://guozhivip.com/yy/api/api.php");
             String mark = ReUtil.get("\"(.*?)\"", content, 1);

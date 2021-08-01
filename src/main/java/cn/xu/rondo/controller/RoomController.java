@@ -288,8 +288,8 @@ public class RoomController extends BaseController {
         HashMap<String, Object> data = new HashMap<>();
         data.put("account", vo.getAccount());
         data.put("channel", vo.getChannel());
-        String ticker = JWTUtils.createTicker(data);
-        vo.setTicker(ticker);
+        String ticket = JWTUtils.createTicker(data);
+        vo.setTicket(ticket);
 
         // 最后一次登录，看是否给房间发送欢迎用户消息
         Boolean lastSend = redis.getCacheObject("channel_" + channel + "_user_" + ip);

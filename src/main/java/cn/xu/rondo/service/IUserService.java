@@ -15,7 +15,7 @@ import java.util.Set;
  * @since 2021-07-17
  */
 public interface IUserService extends IService<User> {
-    User reByLogin(String account, String name);
+    User reByLogin(String account, String name, String plat);
 
     User login(String account, String password);
 

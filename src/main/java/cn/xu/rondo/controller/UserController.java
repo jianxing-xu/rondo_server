@@ -4,6 +4,7 @@ package cn.xu.rondo.controller;
 import cn.hutool.core.util.ReUtil;
 import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.User;
+import cn.xu.rondo.entity.dto.LoginDTO;
 import cn.xu.rondo.entity.dto.UpdateUserDTO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.EE;
@@ -67,9 +68,10 @@ public class UserController extends BaseController {
 
 
     @PostMapping("/login")
-    public JSONObject login(@NotBlank @RequestParam("account") String account,
-                            @NotBlank @RequestParam("password") String password,
-                            @RequestParam("plat") String plat) {
+    public JSONObject login(@RequestBody @Validated LoginDTO loginDTO) {
+        final String account = loginDTO.getAccount();
+        final String password = loginDTO.getPassword();
+        final String plat = loginDTO.getPlat();
         String code = "" + redis.getCacheObject(Constants.mailCode(account)); // TODO: 此处从redis中获取邮箱验证码
         // 邮箱登录
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -87,7 +89,7 @@ public class UserController extends BaseController {
             // 没有找到用户
             if (user == null) {
                 // 注册并登录，账户为邮箱，昵称为@前面的数字
-                user = userService.reByLogin(account, account.split("@")[0]);
+                user = userService.reByLogin(account, account.split("@")[0], plat);
                 // TODO: bbbug中 cache 了 MAIL_{account}
             }
         } else {
@@ -110,8 +112,10 @@ public class UserController extends BaseController {
     }
 
     @PostMapping("/admin/login")
-    public JSONObject loginAdmin(@NotBlank @RequestParam("account") String account,
-                                 @NotBlank @RequestParam("password") String password) {
+    public JSONObject loginAdmin(@RequestBody @Validated LoginDTO loginDTO) {
+        final String account = loginDTO.getAccount();
+        final String password = loginDTO.getPassword();
+        final String plat = loginDTO.getPlat();
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         if (ReUtil.isMatch("^[1-9][0-9]*$", account)) {
             queryWrapper.eq("user_id", account);

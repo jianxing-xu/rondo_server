@@ -58,7 +58,9 @@ public enum EE {
     NOT_MSG_TYPE(1048, "未知消息类型"),
     MO_ME(1049, "我摸我自己，哎，就是玩儿！"),
     OFTEN_MO(1050, "摸的太快啦，稍后在摸！"),
-    MUSIC_MAX_20(1051, "上传歌大小最大20MB");
+    MUSIC_MAX_20(1051, "上传歌大小最大20MB"),
+    MAIL_FORMAT_ERR(1052, "邮箱格式错误"),
+    OFTEN_MAIL(1053, "发送邮箱过频繁1分钟后重试");
 
     private Integer code;
     private String msg;

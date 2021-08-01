@@ -2,6 +2,7 @@ package cn.xu.rondo.controller;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReUtil;
+import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.Response;
 import cn.xu.rondo.service.IConfService;
 import cn.xu.rondo.utils.Constants;
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/common")
-public class CommonController {
+public class CommonController extends BaseController {
 
     @Autowired
     IConfService confService;
@@ -28,12 +29,12 @@ public class CommonController {
     RedisUtil redis;
 
     @GetMapping("/sendMail/{mail}")
-    public Response<String> sendEmail(@PathVariable("mail") String mail) {
+    public String sendEmail(@PathVariable("mail") String mail) {
         if (!ReUtil.isMatch("^\\w+@\\w+.\\w+", mail)) {
-            return new Response<>(400, "邮箱格式错误！");
+            throw ERR(EE.MAIL_FORMAT_ERR);//"邮箱格式错误"
         }
         if (redis.getCacheObject(Constants.mailCode(mail)) != null) {
-            return new Response<>(400, "不要重复发送验证码！");
+            throw ERR(EE.OFTEN_MAIL);//"不要重复发送验证码！");
         }
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("xjx_me@qq.com");
@@ -44,6 +45,6 @@ public class CommonController {
         message.setText("临时验证码【" + code + "】有效期为1分钟");
         javaMailSender.send(message);
         redis.setCacheObject(Constants.mailCode(mail), code, 60 * 5, TimeUnit.SECONDS);
-        return new Response<>(200, "邮箱发送成功");
+        return "邮箱发送成功";
     }
 }

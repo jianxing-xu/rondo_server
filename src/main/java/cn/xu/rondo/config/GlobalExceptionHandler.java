@@ -51,11 +51,11 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(JwtException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.FORBIDDEN) // http 403
     public Response<String> handleBindException(JwtException e) {
         log.warn(e.toString());
         // token校验失败返回
-        return new Response<>(400, "登录过期");
+        return new Response<>(403, "登录过期");
     }
 
     //自定义异常统一响应
@@ -82,7 +82,7 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR) // http 500
     public Response<String> runtimeException(Exception e) {
         e.printStackTrace();
         log.error(e.getMessage());

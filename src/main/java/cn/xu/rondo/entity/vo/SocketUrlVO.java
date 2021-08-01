@@ -7,7 +7,7 @@ import lombok.Data;
 public class SocketUrlVO {
     private String account;
     private String channel;
-    private String ticker;
+    private String ticket;
 
 //    public String md5() {
 //        return SecureUtil.md5("account" + account + "channel" + channel + "salt" + channel);

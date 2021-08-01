@@ -122,7 +122,7 @@ public class IMSocket {
                 try {
                     list.add(Integer.parseInt(x));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("不添加ip临时用户：" + x);
                 }
             }
             online.put("data", list);
