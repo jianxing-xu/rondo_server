@@ -1,4 +1,4 @@
-package cn.xu.rondo.entity.dto;
+package cn.xu.rondo.entity.dto.user;
 
 
 import lombok.Data;

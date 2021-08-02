@@ -10,6 +10,7 @@ import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.User;
 import cn.xu.rondo.entity.dto.AtDTO;
 import cn.xu.rondo.entity.dto.SendMsgDTO;
+import cn.xu.rondo.entity.dto.message.MoDTO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.ChatType;
 import cn.xu.rondo.enums.EE;
@@ -315,9 +316,10 @@ public class MessageController extends BaseController {
 
 
     @PostMapping("/mo")
-    public String mo(@RequestParam("at") @NotNull(message = "你想摸谁") Integer atUserId,
-                     @RequestParam("room_id") Integer roomId,
+    public String mo(@RequestBody MoDTO dto,
                      @UserId Integer userId) {
+        Integer roomId = dto.getRoom_id();
+        Integer atUserId = dto.getAt();
         final User user = checkUser(userId);
         final Room room = checkRoom(roomId);
         final User atUser = checkUser(atUserId);

@@ -4,8 +4,10 @@ package cn.xu.rondo.controller;
 import cn.hutool.core.util.ReUtil;
 import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.User;
-import cn.xu.rondo.entity.dto.LoginDTO;
-import cn.xu.rondo.entity.dto.UpdateUserDTO;
+import cn.xu.rondo.entity.dto.user.LoginDTO;
+import cn.xu.rondo.entity.dto.user.ResetPwdDTO;
+import cn.xu.rondo.entity.dto.user.UpdatePwdDTO;
+import cn.xu.rondo.entity.dto.user.UpdateUserDTO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.enums.SwitchEnum;
@@ -23,13 +25,11 @@ import cn.xu.rondo.utils.validation.EnumValue;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import org.hibernate.validator.constraints.Length;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import cn.xu.rondo.response.Response;
 import org.yeauty.pojo.Session;
 
 import javax.validation.constraints.NotBlank;
@@ -154,7 +154,7 @@ public class UserController extends BaseController {
             return new JSONObject() {{
                 put("user_id", -1);
                 put("user_name", "Ghost");
-                put("user_head", "new/images/nohead.jpg");
+                put("user_head", "/res/images/nohead.jpg");
                 put("role", 0);
                 put("myRoom", false);
             }};
@@ -225,32 +225,27 @@ public class UserController extends BaseController {
 
     /**
      * 修改密码
-     *
-     * @param oldPwd 旧密码
-     * @param newPwd 新密码
      * @param userId 用户id
      * @return 是否成功
      */
     @PostMapping("/pwd/update")
-    public String updatePwd(@RequestParam("old") @Length(min = 6, max = 16) String oldPwd,
-                            @RequestParam("new") @Length(min = 6, max = 16) String newPwd,
+    public String updatePwd(@RequestBody UpdatePwdDTO dto,
                             @UserId Integer userId) {
+        final String newPwd = dto.getNewPwd();
+        final String oldPwd = dto.getOldPwd();
         final boolean b = userService.updatePwd(newPwd, oldPwd, userId);
         return b ? "密码修改成功" : "密码修改失败";
     }
 
     /**
      * 邮箱验证 重置密码
-     *
-     * @param code   验证码
-     * @param mail   邮箱
-     * @param newPwd 新密码
      * @return 消息
      */
     @PostMapping("/pwd/reset")
-    public String resetPwd(@RequestParam("code") @NotBlank String code,
-                           @RequestParam("mail") @NotBlank String mail,
-                           @RequestParam("pwd") @NotBlank String newPwd) {
+    public String resetPwd(@RequestBody ResetPwdDTO dto) {
+        final String mail = dto.getMail();
+        final String code = dto.getCode();
+        final String newPwd = dto.getNewPwd();
         String cacheCode = redis.getCacheObject(Constants.mailCode(mail));
         if (!code.equals(cacheCode)) throw new ApiException(EE.MAIL_CODE_ERR);
         final boolean b = userService.updatePwd(newPwd, mail);

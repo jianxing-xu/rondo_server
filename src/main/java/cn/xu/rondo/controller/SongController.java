@@ -1,7 +1,6 @@
 package cn.xu.rondo.controller;
 
 
-import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HtmlUtil;
@@ -9,6 +8,9 @@ import cn.hutool.http.HttpRequest;
 import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.Song;
 import cn.xu.rondo.entity.User;
+import cn.xu.rondo.entity.dto.song.AddNewSongDTO;
+import cn.xu.rondo.entity.dto.song.AddSongDTO;
+import cn.xu.rondo.entity.dto.song.FavSongDTO;
 import cn.xu.rondo.entity.vo.*;
 import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.Response;
@@ -29,9 +31,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
@@ -47,6 +49,7 @@ import java.util.concurrent.TimeUnit;
  * @author jason xu
  * @since 2021-07-17
  */
+@Validated
 @RestController
 @RequestMapping("/song")
 public class SongController extends BaseController {
@@ -124,15 +127,14 @@ public class SongController extends BaseController {
     /**
      * 收藏歌曲（就是添加到我的歌单，就是往song表中添加一条记录）
      *
-     * @param mid    歌曲mid
-     * @param roomId 房间id
      * @param userId 用户id
      * @return 消息
      */
     @PostMapping("/fav")
-    public String favMySong(@RequestParam("mid") @NotNull Integer mid,
-                            @RequestParam("room_id") @NotNull Integer roomId,
+    public String favMySong(@RequestBody FavSongDTO dto,
                             @UserId Integer userId) {
+        Long mid = dto.getMid();
+        Integer roomId = dto.getRoomId();
         QueryWrapper<Song> wrapper = new QueryWrapper<>();
         wrapper.eq("song_user", userId);
         wrapper.eq("song_mid", mid);
@@ -166,21 +168,17 @@ public class SongController extends BaseController {
      * 添加一首歌到song表中
      */
     @PostMapping("/addNewSong")
-    public String addNewSong(@RequestParam("song_mid") Long songMid,
-                             @RequestParam("song_name") String songName,
-                             @RequestParam("song_singer") String songSinger,
-                             @RequestParam("song_pic") String songPic,
-                             @RequestParam("song_length") Integer songLength,
+    public String addNewSong(@RequestBody AddNewSongDTO dto,
                              @UserId Integer userId) {
         Song song = new Song();
-        song.setSong_mid(songMid);
-        song.setSong_name(songName);
-        song.setSong_singer(songSinger);
-        song.setSong_pic(songPic);
-        song.setSong_length(songLength);
+        song.setSong_mid(dto.getSongMid());
+        song.setSong_name(dto.getSongName());
+        song.setSong_singer(dto.getSongSinger());
+        song.setSong_pic(dto.getSongPic());
+        song.setSong_length(dto.getSongLength());
         song.setSong_user(userId);
-        song.setSong_createtime((int) (System.currentTimeMillis() / 1000));
-        song.setSong_updatetime((int) (System.currentTimeMillis() / 1000));
+        song.setSong_createtime(Common.time().intValue());
+        song.setSong_updatetime(Common.time().intValue());
         songService.save(song);
         return "添加成功！";
     }
@@ -188,15 +186,14 @@ public class SongController extends BaseController {
     /**
      * 直接播放一首歌曲
      *
-     * @param mid    歌曲mid
-     * @param roomId 房间id
      * @param userId 用户id
      * @return 消息
      */
     @PostMapping("/play")
-    public String play(@RequestParam("mid") @NotNull Long mid,
-                       @RequestParam("room_id") @NotNull Integer roomId,
+    public String play(@RequestBody FavSongDTO dto,
                        @UserId Integer userId) {
+        final Integer roomId = dto.getRoomId();
+        final Long mid = dto.getMid();
         Room room = roomService.getById(roomId);
         if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         if (room.getRoom_type() == 4) throw new ApiException(EE.BAN_PLAY);
@@ -270,17 +267,15 @@ public class SongController extends BaseController {
     /**
      * 用户点歌
      *
-     * @param mid    歌曲mid 页面上可能是rid
-     * @param roomId 房间id
-     * @param at     送给谁？
      * @param userId 点歌用户id
      * @return 响应对象
      */
     @PostMapping("/add")
-    public Response<String> addSong(@RequestParam("mid") @NotNull Long mid,
-                                    @RequestParam("room_id") @NotNull Integer roomId,
-                                    @RequestParam(value = "at", required = false) Integer at,
+    public Response<String> addSong(@RequestBody AddSongDTO dto,
                                     @UserId Integer userId) {
+        final Integer roomId = dto.getRoomId();
+        final Long mid = dto.getMid();
+        final Integer at = dto.getAtUser();
         Room room = roomService.getById(roomId);
         if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         if (room.getRoom_type() != 1 && room.getRoom_type() != 4) throw new ApiException(EE.BAN_PLAY);
@@ -572,14 +567,13 @@ public class SongController extends BaseController {
     /**
      * 顶歌（将一首歌顶到队列前头）
      *
-     * @param mid    歌曲mid
-     * @param roomId 房间id
      * @return 成功消息
      */
     @PostMapping("/push")
-    public Response<String> push(@RequestParam("mid") @NotNull Long mid,
-                                 @RequestParam("room_id") @NotNull Integer roomId,
+    public Response<String> push(@RequestBody FavSongDTO dto,
                                  @UserId Integer userId) {
+        final Integer roomId = dto.getRoomId();
+        final Long mid = dto.getMid();
         Room room = roomService.getById(roomId);
         User user = userService.getById(userId);
         if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
@@ -657,14 +651,13 @@ public class SongController extends BaseController {
     /**
      * 从队列里移除一首歌
      *
-     * @param mid    歌曲mid
-     * @param roomId 房间id
      * @return 成功消息
      */
     @PostMapping("/removeForQueue")
-    public String remove(@RequestParam("mid") @NotNull Long mid,
-                         @RequestParam("room_id") @NotNull Integer roomId,
+    public String remove(@RequestBody FavSongDTO dto,
                          @UserId Integer userId) {
+        final Integer roomId = dto.getRoomId();
+        final Long mid = dto.getMid();
         Room room = roomService.getById(roomId);
         User user = userService.getById(userId);
         if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
