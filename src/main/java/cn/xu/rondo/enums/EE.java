@@ -60,7 +60,8 @@ public enum EE {
     OFTEN_MO(1050, "摸的太快啦，稍后在摸！"),
     MUSIC_MAX_20(1051, "上传歌大小最大20MB"),
     MAIL_FORMAT_ERR(1052, "邮箱格式错误"),
-    OFTEN_MAIL(1053, "发送邮箱过频繁1分钟后重试");
+    OFTEN_MAIL(1053, "发送邮箱过频繁1分钟后重试"),
+    LRC_ERR(1054, "歌词获取失败");
 
     private Integer code;
     private String msg;

@@ -27,6 +27,7 @@ spring:
     host: smtp.qq.com
     password: lgdavxgcwukkgbfa
     username: xjx_me@qq.com
+    port: 587
   mvc:
     static-path-pattern: /res/**
   web:

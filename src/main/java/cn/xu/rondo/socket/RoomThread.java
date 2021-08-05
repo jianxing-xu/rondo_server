@@ -43,7 +43,7 @@ public class RoomThread extends Thread {
                 if (songQueueVo != null && songQueueVo.getSong() != null) {
                     // 当前时间戳小于 歌曲的开始播放时间 + 歌曲的长度表示歌曲还没有播放完，正在播放中
                     if (Common.time() < songQueueVo.getSong().getLength() + songQueueVo.getSince()) {
-                        log.info(String.format("房间：%s 正在播放 %s 中,已经播放了%s秒了", room.getRoom_name(), HtmlUtil.escape(songQueueVo.getSong().getName()), Common.time() - songQueueVo.getSince()));
+                        log.info(String.format("房间：%s 正在播放 %s 中,已经播放了%s秒了", room.getRoom_name(), HtmlUtil.unescape(songQueueVo.getSong().getName()), Common.time() - songQueueVo.getSince()));
                         songTask.getSongByRobot(roomId);
                         continue;
                     }

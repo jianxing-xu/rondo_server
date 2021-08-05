@@ -43,8 +43,8 @@ public class CommonController extends BaseController {
         String code = RandomUtil.randomNumbers(6);
         System.out.println("==================MAIL+CODE:  " + code + "========================");
         message.setText("临时验证码【" + code + "】有效期为1分钟");
-        javaMailSender.send(message);
         redis.setCacheObject(Constants.mailCode(mail), code, 60 * 5, TimeUnit.SECONDS);
+        javaMailSender.send(message);
         return "邮箱发送成功";
     }
 }

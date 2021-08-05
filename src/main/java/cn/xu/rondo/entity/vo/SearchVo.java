@@ -17,19 +17,19 @@ public class SearchVo {
     private Integer week;
 
     public void setName(String name) {
-        name = HtmlUtil.escape(name);
+        name = HtmlUtil.unescape(name);
         this.name = name;
     }
 
     public void setAlbum(String album) {
         album = album.replace("&apos;", "");
-        album = HtmlUtil.escape(album);
+        album = HtmlUtil.unescape(album);
         this.album = album;
     }
 
     public void setSinger(String singer) {
         singer = singer.replace("&apos;", "");
-        singer = HtmlUtil.escape(singer);
+        singer = HtmlUtil.unescape(singer);
         this.singer = singer;
     }
 }

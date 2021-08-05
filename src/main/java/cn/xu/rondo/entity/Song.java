@@ -100,7 +100,7 @@ public class Song implements Serializable {
     }
 
     public void setSong_name(String song_name) {
-        this.song_name = HtmlUtil.escape(song_name);
+        this.song_name = HtmlUtil.unescape(song_name);
     }
 
     public String getSong_singer() {
@@ -109,7 +109,7 @@ public class Song implements Serializable {
 
     public void setSong_singer(String song_singer) {
         this.song_singer = song_singer;
-        this.song_singer = HtmlUtil.escape(song_singer);
+        this.song_singer = HtmlUtil.unescape(song_singer);
     }
 
     public String getSong_pic() {

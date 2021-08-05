@@ -82,8 +82,8 @@ public class SongController extends BaseController {
      * @param keyword 关键词
      */
     @GetMapping("/search")
-    public List<SearchVo> search(@RequestParam("isHot") Boolean isHot,
-                                 @RequestParam(value = "page", defaultValue = "1") Integer page,
+    public List<SearchVo> search(@RequestParam(value = "isHot", required = false) Boolean isHot,
+                                 @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
                                  @RequestParam(value = "keyword", required = false) String keyword) {
         if (isHot != null && isHot) {
             List<SearchVo> hotList = redis.getCacheList(Constants.PopularWeek);
@@ -315,7 +315,7 @@ public class SongController extends BaseController {
                 existSongName = songQueueVo.getSong().getName();
             }
         }
-        if (existSongName != null) return new Response<>(1020, "歌曲 '" + HtmlUtil.escape(existSongName) + "'正在等待播放呢！");
+        if (existSongName != null) return new Response<>(1020, "歌曲 '" + HtmlUtil.unescape(existSongName) + "'正在等待播放呢！");
         // 取点歌cd时间
         Integer cd = room.getRoom_addsongcd();
 
@@ -392,7 +392,7 @@ public class SongController extends BaseController {
             songService.updateById(existSong);
         }
 
-        return Response.success(String.format("歌曲%s已添加到播放列表", HtmlUtil.escape(existSong.getSong_name())));
+        return Response.success(String.format("歌曲%s已添加到播放列表", HtmlUtil.unescape(existSong.getSong_name())));
     }
 
 
@@ -518,8 +518,8 @@ public class SongController extends BaseController {
      *
      * @param roomId 房间id
      */
-    @GetMapping("/queue")
-    public List<SongQueueVo> queue(@RequestParam("room_id") Integer roomId) {
+    @GetMapping("/queue/{roomId}")
+    public List<SongQueueVo> queue(@PathVariable("roomId") Integer roomId) {
         List<SongQueueVo> queue = redis.getCacheList(Constants.SongList + roomId);
         if (queue == null) queue = new ArrayList<>();
         return queue;
@@ -536,7 +536,12 @@ public class SongController extends BaseController {
 
         List<LrcLine> lyricList = redis.getCacheList(Constants.SongLrcKey + mid);
         if (lyricList != null && lyricList.size() != 0) {
-            return JSONArray.parseArray(JSON.toJSONString(lyricList));
+            try {
+                return JSONArray.parseArray(JSON.toJSONString(lyricList));
+            } catch (Exception e) {
+                log.error(e.toString());
+                throw ERR(EE.LRC_ERR);
+            }
         }
         String token = RandomUtil.randomNumbers(8);
         try {
@@ -554,13 +559,13 @@ public class SongController extends BaseController {
                     redis.expire(Constants.SongLrcKey + mid, 3600, TimeUnit.SECONDS);
                     return jsonArray;
                 } else {
-                    throw new ApiException(EE.KW_QUERY_ERR);
+                    throw new ApiException(EE.LRC_ERR);
                 }
             }
         } catch (Exception e) {
-            throw new ApiException(EE.KW_QUERY_ERR);
+            throw new ApiException(EE.LRC_ERR);
         }
-        throw new ApiException(EE.KW_QUERY_ERR);
+        throw new ApiException(EE.LRC_ERR);
     }
 
 
@@ -642,9 +647,8 @@ public class SongController extends BaseController {
         redis.setCacheObject(Constants.PushLastTime + userId, Common.time());
         redis.expire(Constants.PushLastTime + userId, room.getRoom_pushsongcd(), TimeUnit.SECONDS);
         if (!user.isVip() && !user.isAdmin() && !userId.equals(room.getRoom_user())) {
-            return Response.success(String.format("顶歌成功，今日剩余%s次顶歌机会", pushCount - pushCache));
+            return Response.errorMsg(String.format("顶歌成功，今日剩余%s次顶歌机会", pushCount - pushCache));
         }
-
         return Response.success("顶歌成功");
     }
 

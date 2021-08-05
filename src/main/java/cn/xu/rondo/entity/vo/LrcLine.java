@@ -9,6 +9,6 @@ public class LrcLine {
     private String time;
 
     public void setLineLyric(String lineLyric) {
-        this.lineLyric = HtmlUtil.escape(lineLyric);
+        this.lineLyric = HtmlUtil.unescape(lineLyric);
     }
 }

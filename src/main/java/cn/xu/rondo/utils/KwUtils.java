@@ -3,6 +3,8 @@ package cn.xu.rondo.utils;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.http.HtmlUtil;
+import cn.hutool.http.HttpException;
 import cn.hutool.http.HttpRequest;
 import cn.xu.rondo.entity.vo.SearchVo;
 import cn.xu.rondo.enums.EE;
@@ -58,6 +60,8 @@ public class KwUtils {
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
+        } catch (HttpException e) {
+            log.error("拉取歌曲超时");
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -124,11 +128,11 @@ public class KwUtils {
                     //String songPic = staticUrl+"images/logo.png";
                     JSONObject json = (JSONObject) JSON.toJSON(song);
                     SearchVo searchVo = new SearchVo();
-                    searchVo.setMid((Long) json.get("rid"));
-                    searchVo.setName((String) json.get("name"));
+                    searchVo.setMid((Long.parseLong((json.get("rid").toString()))));
+                    searchVo.setName(HtmlUtil.unescape((String) json.get("name")));
                     searchVo.setPic((String) json.get("pic"));
                     searchVo.setLength((Integer) json.get("duration"));
-                    searchVo.setSinger((String) json.get("artist"));
+                    searchVo.setSinger(HtmlUtil.unescape((String) json.get("artist")));
                     searchVo.setAlbum((String) json.get("album"));
                     searchResult.add(searchVo);
                     //缓存所有歌曲详情
