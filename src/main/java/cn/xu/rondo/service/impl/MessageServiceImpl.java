@@ -4,11 +4,13 @@ import cn.hutool.core.date.CalendarUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import cn.xu.rondo.entity.Message;
+import cn.xu.rondo.entity.vo.MessageVO;
 import cn.xu.rondo.mapper.MessageMapper;
 import cn.xu.rondo.service.IMessageService;
 import cn.xu.rondo.utils.Common;
 import cn.xu.rondo.utils.Constants;
 import cn.xu.rondo.utils.RedisUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,9 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
 
     @Autowired
     RedisUtil redis;
+
+    @Autowired
+    MessageMapper mapper;
 
     @Override
     public boolean checkIPBAN() {
@@ -56,5 +61,15 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
 
         Date endDate = DateUtil.offset(DateUtil.date(end), DateField.DAY_OF_MONTH, 1);
         return now > start.getTimeInMillis() && now < endDate.getTime();
+    }
+
+    /**
+     * 查询消息记录
+     * @param page 分页对象
+     * @return 消息列表
+     */
+    @Override
+    public List<MessageVO> selectMessages(Page<MessageVO> page, Integer to, Integer status) {
+        return mapper.selectMessages(page,to,status);
     }
 }

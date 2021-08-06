@@ -422,6 +422,7 @@ public class SongController extends BaseController {
         JSONObject json = new JSONObject();
         json.put("list", records);
         json.put("total", pager.getTotal());
+        json.put("totalPage", pager.getPages());
         return json;
     }
 

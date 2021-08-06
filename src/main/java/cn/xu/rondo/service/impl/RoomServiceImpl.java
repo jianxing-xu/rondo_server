@@ -5,6 +5,7 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpRequest;
 import cn.xu.rondo.entity.Room;
+import cn.xu.rondo.entity.vo.HotRoomVO;
 import cn.xu.rondo.mapper.RoomMapper;
 import cn.xu.rondo.service.IRoomService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -32,6 +33,11 @@ public class RoomServiceImpl extends ServiceImpl<RoomMapper, Room> implements IR
 
     @Autowired
     private RoomMapper roomMapper;
+
+    @Override
+    public List<HotRoomVO> hotRooms() {
+        return roomMapper.hotRooms();
+    }
 
     @Override
     public String getRegion(String ip) {

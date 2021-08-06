@@ -47,6 +47,7 @@ public enum EE {
     BACK_ONLY_5(1037, "你只能撤回5分钟内的消息"),
     NEED_PWD(1038, "需要重新输入密码"),
     POP_INPUT_PWD(1039, "请输入房间密码"),
+    ROOM_PWD_ERROR(1139, "房间密码错误"),
     ROOM_SECURE(1040, "加密房间"),
     ALL_MUTE(1041, "全员禁言中"),
     MSG_EMPTY(1042, "消息不能为空"),

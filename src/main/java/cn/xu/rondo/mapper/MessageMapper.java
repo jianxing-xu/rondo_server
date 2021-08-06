@@ -1,7 +1,11 @@
 package cn.xu.rondo.mapper;
 
 import cn.xu.rondo.entity.Message;
+import cn.xu.rondo.entity.vo.MessageVO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +16,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @since 2021-07-17
  */
 public interface MessageMapper extends BaseMapper<Message> {
-
+    List<MessageVO> selectMessages(Page<?> page, Integer to, Integer status);
 }

@@ -5,6 +5,7 @@ import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.User;
 import cn.xu.rondo.entity.dto.CreateRoom;
 import cn.xu.rondo.entity.dto.UpdateRoomDTO;
+import cn.xu.rondo.entity.vo.HotRoomVO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.entity.vo.RoomDetailVO;
 import cn.xu.rondo.entity.vo.SocketUrlVO;
@@ -68,16 +69,12 @@ public class RoomController extends BaseController {
      * @return 响应对象
      */
     @GetMapping("/hot")
-    public List<Room> getHotRooms() {
+    public List<HotRoomVO> getHotRooms() {
         // 从redis中取，取到就返回
-        List<Room> roomList = redis.getCacheList(Constants.roomList);
+        List<HotRoomVO> roomList = redis.getCacheList(Constants.roomList);
         if (roomList != null && roomList.size() != 0) return roomList;
         // 取不到就查询
-        QueryWrapper<Room> wrap = new QueryWrapper<>();
-        wrap.orderBy(true, false, "room_order");//排序值降序
-        wrap.orderBy(true, false, "room_online");//在线人数降序
-        wrap.orderByAsc("room_id");//id升序
-        List<Room> list = roomService.list(wrap).subList(0, 10);
+        final List<HotRoomVO> list = roomService.hotRooms();
         // 将热门房间缓存到redis中
         redis.setCacheList(Constants.roomList, list);
         // 设置过期时间
@@ -180,7 +177,7 @@ public class RoomController extends BaseController {
                     redis.expire(Constants.SavedPwd(roomId, userId), 1, TimeUnit.DAYS);
                     return vo;
                 } else {
-                    throw new ApiException(EE.PWD_ERROR);
+                    throw new ApiException(EE.ROOM_PWD_ERROR);
                 }
             }
             // 没输入密码字段

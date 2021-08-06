@@ -1,6 +1,7 @@
 package cn.xu.rondo.controller;
 
 
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HtmlUtil;
 import cn.hutool.http.HttpUtil;
@@ -11,6 +12,7 @@ import cn.xu.rondo.entity.User;
 import cn.xu.rondo.entity.dto.AtDTO;
 import cn.xu.rondo.entity.dto.SendMsgDTO;
 import cn.xu.rondo.entity.dto.message.MoDTO;
+import cn.xu.rondo.entity.vo.MessageVO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.ChatType;
 import cn.xu.rondo.enums.EE;
@@ -24,6 +26,7 @@ import cn.xu.rondo.utils.StringUtils;
 import cn.xu.rondo.utils.params_resolver.UserId;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,10 +107,11 @@ public class MessageController extends BaseController {
     }
 
     @GetMapping("/list/{room_id}")
-    public List<Message> list(@PathVariable("room_id") Integer roomId,
-                              @RequestParam(value = "page_num", required = false, defaultValue = "1") Integer pageNum,
-                              @RequestParam(value = "page_size", required = false, defaultValue = "20") Integer pageSize,
-                              @UserId Integer userId) {
+    public List<MessageVO> list(@PathVariable("room_id") Integer roomId,
+                                @RequestParam(value = "page_num", required = false, defaultValue = "1") Integer pageNum,
+                                @RequestParam(value = "page_size", required = false, defaultValue = "20") Integer pageSize,
+                                @RequestParam(value = "status", required = false, defaultValue = "0") Integer status,
+                                @UserId Integer userId) {
 
         Room room = roomService.getById(roomId);
         if (!room.isPublic()) {
@@ -124,18 +128,16 @@ public class MessageController extends BaseController {
             }
         }
 
-        List<Message> list = redis.getCacheList(Constants.RoomMsgList + roomId);
+        List<MessageVO> list = redis.getCacheList(Constants.RoomMsgList + roomId);
         if (list != null && list.size() != 0) return list;
 
-        Page<Message> page = new Page<>(pageNum, pageSize);
-        QueryWrapper<Message> wrap = new QueryWrapper<>();
-        wrap.eq("message_to", roomId);
-        wrap.eq("message_status", 0);
-        Page<Message> msgPager = messageService.page(page, wrap);
-        final List<Message> records = msgPager.getRecords();
-        redis.setCacheList(Constants.RoomMsgList + roomId, records);
-        redis.expire(Constants.RoomMsgList + roomId, 10, TimeUnit.SECONDS);
-        return records;
+        Page<MessageVO> page = new Page<>(pageNum, pageSize);
+        final List<MessageVO> messageVOS = messageService.selectMessages(page, roomId, status);
+        if (messageVOS.size() != 0) {
+            redis.setCacheList(Constants.RoomMsgList + roomId, messageVOS);
+            redis.expire(Constants.RoomMsgList + roomId, 10, TimeUnit.SECONDS);
+        }
+        return messageVOS;
     }
 
     @PostMapping("/send")
@@ -232,7 +234,7 @@ public class MessageController extends BaseController {
                 // 插入数据库
                 Message message = new Message();
                 message.setMessage_user(userId);
-                message.setMessage_type(type);
+                message.setMessage_type("text");
                 message.setMessage_content("");
                 message.setMessage_to(roomId);
                 message.setMessage_where(where);
@@ -244,13 +246,15 @@ public class MessageController extends BaseController {
                 messageService.save(message);
 
                 JSONObject data = new JSONObject();
-                data.put("content", msg);
-                data.put("where", where);
-                data.put("at", atUser);
+                data.put("message_to", roomId);
+                data.put("message_type", "text");
+                data.put("message_content", resource);
+                data.put("message_where", where);
                 data.put("message_id", message.getMessage_id());
-                data.put("message_time", Common.time());
-                data.put("resource", msg);
-                user.setUser_password(null);
+                data.put("message_createtime", Common.time());
+                data.put("message_resource", resource);
+                data.put("message_status", 0);
+                data.put("at", atUser);
                 data.put("user", user);
                 String imMsg = new MsgVo(MsgVo.TEXT, data).build();
                 // 发送socket消息
@@ -285,13 +289,16 @@ public class MessageController extends BaseController {
                 messageService.save(imgMsg);
 
                 JSONObject imgData = new JSONObject();
-                imgData.put("content", resource);
-                imgData.put("where", where);
-                imgData.put("at", atUser);
+                imgData.put("message_to", roomId);
+                imgData.put("message_type", "img");
+                imgData.put("message_content", resource);
+                imgData.put("message_where", where);
                 imgData.put("message_id", imgMsg.getMessage_id());
-                imgData.put("message_time", Common.time());
-                imgData.put("resource", resource);
+                imgData.put("message_createtime", Common.time());
+                imgData.put("message_resource", resource);
+                imgData.put("message_status", 0);
                 user.setUser_password(null);
+                imgData.put("at", atUser);
                 imgData.put("user", user);
                 String imgImMsg = new MsgVo(MsgVo.IMG, imgData).build();
                 sendMsg(roomId, imgImMsg);
@@ -334,9 +341,11 @@ public class MessageController extends BaseController {
         redis.setCacheObject(Constants.mo + userId, true);
         redis.expire(Constants.mo + userId, mo_cd, TimeUnit.SECONDS);
 
+
         JSONObject data = new JSONObject();
         data.put("user", userData(user));
         data.put("at", userData(atUser));
+        data.put("message_id", UUID.fastUUID().getMostSignificantBits());
         String msg = new MsgVo(MsgVo.TOUCH, data).build();
         sendMsg(roomId, msg);
 
@@ -352,14 +361,19 @@ public class MessageController extends BaseController {
             User robotInfo = userService.getById(1);
             String content = Constants.touch_machine[RandomUtil.randomInt(0, Constants.touch_machine.length - 1)];
             JSONObject macMsg = new JSONObject();
-            macMsg.put("content", content);
-            macMsg.put("where", roomId);
+            macMsg.put("message_to", roomId);
+            macMsg.put("message_type", "text");
+            macMsg.put("message_content", content);
+            macMsg.put("message_where", "channel");
+            macMsg.put("message_id", UUID.fastUUID().getMostSignificantBits());
+            macMsg.put("message_createtime", Common.time());
+            macMsg.put("message_resource", content);
+            macMsg.put("message_status", 0);
+            //
             macMsg.put("at", new JSONObject() {{
                 put("user_id", userId);
                 put("user_name", user.getUser_name());
             }});
-            macMsg.put("message_id", 0);
-            macMsg.put("resource", content);
             robotInfo.setUser_password(null);
             macMsg.put("user", robotInfo);
             sendMsg(roomId, new MsgVo(MsgVo.TEXT, macMsg).build());

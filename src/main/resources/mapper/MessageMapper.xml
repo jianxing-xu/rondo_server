@@ -1,5 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cn.xu.roundo.mapper.MessageMapper">
-
+<mapper namespace="cn.xu.rondo.mapper.MessageMapper">
+    <resultMap id="messageVo" type="cn.xu.rondo.entity.vo.MessageVO">
+        <id column="message_id" property="message_id"/>
+        <result property="message_content" column="message_content"/>
+        <result property="message_createtime" column="message_createtime"/>
+        <result property="message_status" column="message_status"/>
+        <result property="message_to" column="message_to"/>
+        <result property="message_type" column="message_type"/>
+        <result property="message_user" column="message_user"/>
+        <association property="user" javaType="cn.xu.rondo.entity.User">
+            <id property="user_id" column="user_id"></id>
+            <result property="user_account" column="user_account"/>
+            <result property="user_group" column="user_group"/>
+            <result property="user_head" column="user_head"/>
+            <result property="user_icon" column="user_icon"/>
+            <result property="user_ipreg" column="user_ipreg"/>
+            <result property="user_name" column="user_name"/>
+            <result property="user_remark" column="user_remark"/>
+            <result property="user_sex" column="user_sex"/>
+            <result property="user_status" column="user_status"/>
+            <result property="user_vip" column="user_vip"/>
+            <result property="user_touchtip" column="user_touchtip"/>
+        </association>
+    </resultMap>
+    <select id="selectMessages" resultMap="messageVo">
+        SELECT sa_message.*, sa_user.*
+        FROM sa_message
+        LEFT JOIN sa_user
+            ON sa_message.message_user = sa_user.user_id
+        where sa_message.message_status = #{status} and sa_message.message_to = #{to}
+    </select>
 </mapper>
