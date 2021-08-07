@@ -131,8 +131,8 @@ public class SongController extends BaseController {
      * @return 消息
      */
     @PostMapping("/fav")
-    public String favMySong(@RequestBody FavSongDTO dto,
-                            @UserId Integer userId) {
+    public Response<String> favMySong(@RequestBody FavSongDTO dto,
+                                      @UserId Integer userId) {
         Long mid = dto.getMid();
         Integer roomId = dto.getRoomId();
         QueryWrapper<Song> wrapper = new QueryWrapper<>();
@@ -161,7 +161,7 @@ public class SongController extends BaseController {
         data.put("content", user.getUser_name() + "收藏了当前歌曲");
         String msg = new MsgVo(MsgVo.SYSTEM, data).build();
         imSocket.sendMsgToRoom(String.valueOf(roomId), msg);
-        return "收藏成功";
+        return Response.successTip("收藏成功");
     }
 
     /**
@@ -315,7 +315,7 @@ public class SongController extends BaseController {
                 existSongName = songQueueVo.getSong().getName();
             }
         }
-        if (existSongName != null) return new Response<>(1020, "歌曲 '" + HtmlUtil.unescape(existSongName) + "'正在等待播放呢！");
+        if (existSongName != null) return Response.successTip("歌曲 '" + HtmlUtil.unescape(existSongName) + "'正在等待播放呢！");
         // 取点歌cd时间
         Integer cd = room.getRoom_addsongcd();
 
@@ -435,7 +435,7 @@ public class SongController extends BaseController {
      * @return 成功消息
      */
     @GetMapping("/pass")
-    public String pass(@RequestParam("mid") @NotNull Long mid,
+    public Response<String> pass(@RequestParam("mid") @NotNull Long mid,
                        @RequestParam("room_id") @NotNull Integer roomId,
                        @UserId Integer userId, HttpServletRequest request) {
 
@@ -466,7 +466,7 @@ public class SongController extends BaseController {
             Long passMid = redis.getCacheObject(Constants.SongAlreadyPass(roomId, userId));
             if (now.getSong().getMid().equals(passMid)) {
                 log.info("已有" + passCount + "人不想听," + room.getRoom_votepercent() + "%(" + targetCount + "人)不想听即可激动切歌~ ");
-                return "已有" + passCount + "人不想听," + room.getRoom_votepercent() + "%(" + targetCount + "人)不想听即可激动切歌~ ";
+                return Response.errorMsg("已有" + passCount + "人不想听," + room.getRoom_votepercent() + "%(" + targetCount + "人)不想听即可激动切歌~ ");
             }
 
             redis.setCacheObject(Constants.SongAlreadyPass(roomId, userId), now.getSong().getMid());
@@ -476,6 +476,11 @@ public class SongController extends BaseController {
             log.info("有人表示不太喜欢当前歌曲" + passCount + "/" + targetCount);
             JSONObject data = new JSONObject();
             data.put("content", String.format("有人表示不太喜欢当前播放的歌（%s/%s）", passCount, targetCount));
+            //TODO: !!!暂时随机匿名处理，随后加入房间实体字段!!!
+            boolean anonymous = RandomUtil.randomInt(0, 10) > 5;
+            if (anonymous) {
+                data.put("user", user);
+            }
             String msg = new MsgVo(MsgVo.SYSTEM, data).build();
             imSocket.sendMsgToRoom(String.valueOf(roomId), msg);
 
@@ -484,7 +489,7 @@ public class SongController extends BaseController {
                 log.info("人数已经到达切歌需求，系统自动切歌");
                 //TODO: 发送人数到达目标切歌系统消息 OK!
                 JSONObject jsonData = new JSONObject();
-                data.put("content", room.getRoom_votepercent() + "%的在在线用户（" + targetCount + "人）不想听这首歌，系统已自动切歌！");
+                jsonData.put("content", room.getRoom_votepercent() + "%的在在线用户（" + targetCount + "人）不想听这首歌，系统已自动切歌！");
                 String imMsg = new MsgVo(MsgVo.SYSTEM, jsonData).build();
                 imSocket.sendMsgToRoom(String.valueOf(roomId), imMsg);
             }
@@ -500,18 +505,17 @@ public class SongController extends BaseController {
             passList.add(0, pass);
             redis.setCacheListForDel(Constants.SongPassList + roomId, passList);
             redis.expire(Constants.SongPassList + roomId, 3600, TimeUnit.SECONDS);
-            return "你的不想听态度表态成功！";
+            return Response.successTip("你的不想听态度表态成功！");
         }
         // 有权限的人直接切歌
         redis.setCacheObject(Constants.SongNow + roomId, null);
         //TODO: 发送切歌系统消息到房间 OK!
         JSONObject passData = new JSONObject();
         user.setUser_password(null);
-        passData.put("user", user);
-        passData.put("song", songDetail);
+        passData.put("content", user.getUser_name()+"切掉这首歌！");
         String passMsg = new MsgVo(MsgVo.PASS, passData).build();
         imSocket.sendMsgToRoom(String.valueOf(roomId), passMsg);
-        return "切歌成功";
+        return Response.successTip("切歌成功！");
     }
 
     /**
@@ -648,9 +652,9 @@ public class SongController extends BaseController {
         redis.setCacheObject(Constants.PushLastTime + userId, Common.time());
         redis.expire(Constants.PushLastTime + userId, room.getRoom_pushsongcd(), TimeUnit.SECONDS);
         if (!user.isVip() && !user.isAdmin() && !userId.equals(room.getRoom_user())) {
-            return Response.errorMsg(String.format("顶歌成功，今日剩余%s次顶歌机会", pushCount - pushCache));
+            return Response.successTip(String.format("顶歌成功，今日剩余%s次顶歌机会", pushCount - pushCache));
         }
-        return Response.success("顶歌成功");
+        return Response.successTip("顶歌成功");
     }
 
     /**

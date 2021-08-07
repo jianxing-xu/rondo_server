@@ -11,6 +11,7 @@ import cn.xu.rondo.entity.dto.user.UpdateUserDTO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.enums.SwitchEnum;
+import cn.xu.rondo.response.Response;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IRoomService;
 import cn.xu.rondo.service.IUserService;
@@ -225,6 +226,7 @@ public class UserController extends BaseController {
 
     /**
      * 修改密码
+     *
      * @param userId 用户id
      * @return 是否成功
      */
@@ -239,6 +241,7 @@ public class UserController extends BaseController {
 
     /**
      * 邮箱验证 重置密码
+     *
      * @return 消息
      */
     @PostMapping("/pwd/reset")
@@ -266,10 +269,10 @@ public class UserController extends BaseController {
      * @return 消息
      */
     @PostMapping("/shutdown/{type}/{roomId}/{banId}")
-    public String shutdown(@PathVariable("roomId") Integer roomId,
-                           @PathVariable("banId") Integer banId,
-                           @PathVariable("type") @EnumValue(enumClass = SwitchEnum.class, message = "禁止类型不匹配") Integer type,
-                           @UserId Integer userId) {
+    public Response<String> shutdown(@PathVariable("roomId") Integer roomId,
+                                     @PathVariable("banId") Integer banId,
+                                     @PathVariable("type") @EnumValue(enumClass = SwitchEnum.class, message = "禁止类型不匹配") Integer type,
+                                     @UserId Integer userId) {
         User user = userService.getById(userId);
         User banUser = userService.getById(banId);
         Room room = roomService.getById(roomId);
@@ -295,7 +298,7 @@ public class UserController extends BaseController {
         String msg = new MsgVo(MsgVo.SHUT_DOWN, data).build();
         // 向房间发送消息
         imSocket.sendMsgToRoom(String.valueOf(roomId), msg);
-        return "禁止操作成功！";
+        return Response.successTip("禁止操作成功！");
     }
 
 
@@ -310,9 +313,9 @@ public class UserController extends BaseController {
      * @return 消息
      */
     @PostMapping("/removeBan/{roomId}/{banId}")
-    public String removeBan(@PathVariable("roomId") Integer roomId,
-                            @PathVariable("banId") Integer banId,
-                            @UserId Integer userId) {
+    public Response<String> removeBan(@PathVariable("roomId") Integer roomId,
+                                      @PathVariable("banId") Integer banId,
+                                      @UserId Integer userId) {
         User user = userService.getById(userId);
         User banUser = userService.getById(banId);
         Room room = roomService.getById(roomId);
@@ -326,10 +329,11 @@ public class UserController extends BaseController {
         JSONObject data = new JSONObject();
         data.put("user", user);
         data.put("ban", banUser);
+        data.put("msg", "解除禁止状态");
         String msg = new MsgVo(MsgVo.REMOVE_BAN, data).build();
         // 向房间发送消息
         imSocket.sendMsgToRoom(String.valueOf(roomId), msg);
-        return "解除禁止操作成功！";
+        return Response.successTip("解除禁止操作成功");
     }
 
 

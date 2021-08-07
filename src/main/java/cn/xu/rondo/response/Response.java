@@ -29,6 +29,11 @@ public class Response<T> {
         return new Response<>(1000, msg);
     }
 
+    // 成操作的提示消息
+    public static Response<String> successTip(String tipMsg) {
+        return new Response<>(1001, tipMsg);
+    }
+
     public static Response<String> errorMsg(String msg) {
         return new Response<>(5005, msg);
     }

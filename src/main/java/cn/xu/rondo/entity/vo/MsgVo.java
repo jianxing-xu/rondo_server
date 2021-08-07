@@ -1,6 +1,9 @@
 package cn.xu.rondo.entity.vo;
 
 
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +13,8 @@ import lombok.Setter;
 public class MsgVo {
     private String type;
     private JSONObject data;
+    private String id;
+    private Long timestamp;
 
     public MsgVo(String t) {
         JSONObject j = new JSONObject();
@@ -21,14 +26,12 @@ public class MsgVo {
     public MsgVo(String type, JSONObject data) {
         this.type = type;
         this.data = data;
+        this.timestamp = System.currentTimeMillis();
+        this.id = IdUtil.randomUUID();
     }
 
     public String build() {
-        JSONObject json = new JSONObject();
-        json.put("type", this.type);
-        json.put("timestamp", System.currentTimeMillis());
-        json.put("data", this.data);
-        return json.toJSONString();
+        return JSON.toJSONString(this);
     }
 
     public static final String ADD_SONG = "addSong"; // , "点歌{user,song}"),

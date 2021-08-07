@@ -118,12 +118,12 @@ public class RoomController extends BaseController {
      * @return 我的房间信息
      */
     @GetMapping("/myRoom")
-    public Response<Room> myRoom(@UserId Integer userId) {
+    public Room myRoom(@UserId Integer userId) {
         QueryWrapper<Room> wrap = new QueryWrapper<>();
         wrap.eq("user_id", userId);
         Room room = roomService.getOne(wrap);
         room.setRoom_password(null);
-        return new Response<>(room);
+        return room;
     }
 
     /**
@@ -233,6 +233,7 @@ public class RoomController extends BaseController {
 
         JSONObject msgData = new JSONObject();
         msgData.put("reConnect", reConnect);
+        msgData.put("content", reConnect ? "房间密码已修改" : "房间信息已修改");
         msgData.put("user", user);
         String msg = new MsgVo(MsgVo.ROOM_UPDATE, msgData).build();
         imSocket.sendMsgToRoom(String.valueOf(room_id), msg);
@@ -294,28 +295,32 @@ public class RoomController extends BaseController {
         if (lastSend == null || !lastSend) {
             StringBuilder content = new StringBuilder("欢迎");
             if (StringUtils.isNotEmpty(region)) content.append("来自").append(region).append("的");
+            int userType = 0;
             if (!Common.isVisitor()) {
-                content.append(user.getUser_name()).append("回来！");
+//                content.append(user.getUser_name()).append("回来！");
             } else if (StringUtils.isNotEmpty(plat)) {
-                content.append(plat).append("用户");
+//                content.append(plat).append("用户");
+                userType = 1;
             } else {
-                content.append("临时用户");
+                userType = 2;
+//                content.append("临时用户");
             }
             //TODO: sendWebsocketMsg 发送系统消息通知用户上线OK!
             // 发送完消息，往redis里存一份记录，记录过期后才需要发送消息，三分钟内重新进入系统不会发送欢迎消息OK!
             log.info(content.toString());
             redis.setCacheObject("channel_" + channel + "_user_" + ip, true);
             log.info("SEND_WEBSOCKET_MSG: 房间号:" + channel + "中的" + vo.getAccount() + "上线了！");
-            if (!user.isAdmin()) {
-                JSONObject jsonData = new JSONObject();
-                jsonData.put("name", user.getUser_name());
-                jsonData.put("where", region);
-                jsonData.put("plat", plat);
-                jsonData.put("user", user); //TODO: user.setUser_password(null);
-                jsonData.put("content", content);
-                String msg = new MsgVo(MsgVo.JOIN, jsonData).build();
-                imSocket.sendMsgToRoom(channel, msg);
-            }
+//            if (!user.isAdmin()) {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("userType", userType);
+            jsonData.put("name", user.getUser_name());
+            jsonData.put("where", region);
+            jsonData.put("plat", plat);
+            jsonData.put("user", user); //TODO: user.setUser_password(null);
+            jsonData.put("content", content);
+            String msg = new MsgVo(MsgVo.JOIN, jsonData).build();
+            imSocket.sendMsgToRoom(channel, msg);
+//            }
         }
         // 刷新是否欢迎标志
         redis.expire("channel_" + channel + "_user_" + ip, 3, TimeUnit.MINUTES);

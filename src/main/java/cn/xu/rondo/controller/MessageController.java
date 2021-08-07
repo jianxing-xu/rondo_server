@@ -2,6 +2,7 @@ package cn.xu.rondo.controller;
 
 
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HtmlUtil;
 import cn.hutool.http.HttpUtil;
@@ -16,6 +17,7 @@ import cn.xu.rondo.entity.vo.MessageVO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.ChatType;
 import cn.xu.rondo.enums.EE;
+import cn.xu.rondo.response.Response;
 import cn.xu.rondo.service.IMessageService;
 import cn.xu.rondo.service.IRoomService;
 import cn.xu.rondo.service.IUserService;
@@ -63,9 +65,9 @@ public class MessageController extends BaseController {
     RedisUtil redis;
 
     @DeleteMapping("/back/{room_id}/{msg_id}")
-    public String back(@PathVariable("room_id") Integer roomId,
-                       @PathVariable("msg_id") Integer msgId,
-                       @UserId Integer userId) {
+    public Response<String> back(@PathVariable("room_id") Integer roomId,
+                                 @PathVariable("msg_id") Integer msgId,
+                                 @UserId Integer userId) {
         User user = userService.getById(userId);
         Room room = roomService.getById(roomId);
         Message msg = messageService.getById(msgId);
@@ -86,7 +88,7 @@ public class MessageController extends BaseController {
         String imMsg = new MsgVo(MsgVo.BACK, data).build();
         sendMsg(roomId, imMsg);
         messageService.removeById(msgId);
-        return "消息撤回成功";
+        return Response.successTip("消息撤回成功");
     }
 
     @DeleteMapping("/back/{room_id}")
@@ -323,8 +325,8 @@ public class MessageController extends BaseController {
 
 
     @PostMapping("/mo")
-    public String mo(@RequestBody MoDTO dto,
-                     @UserId Integer userId) {
+    public Response<String> mo(@RequestBody MoDTO dto,
+                               @UserId Integer userId) {
         Integer roomId = dto.getRoom_id();
         Integer atUserId = dto.getAt();
         final User user = checkUser(userId);
@@ -341,11 +343,9 @@ public class MessageController extends BaseController {
         redis.setCacheObject(Constants.mo + userId, true);
         redis.expire(Constants.mo + userId, mo_cd, TimeUnit.SECONDS);
 
-
         JSONObject data = new JSONObject();
         data.put("user", userData(user));
         data.put("at", userData(atUser));
-        data.put("message_id", UUID.fastUUID().getMostSignificantBits());
         String msg = new MsgVo(MsgVo.TOUCH, data).build();
         sendMsg(roomId, msg);
 
@@ -355,7 +355,7 @@ public class MessageController extends BaseController {
         if (atUserId != null && atUserId.equals(1)) {
             int random = RandomUtil.randomInt(0, 100);
             // TODO：摸机器人触发概率
-            isRobotEnable = !Common.checkShutdown(0, roomId, 1) && random > 10;
+            isRobotEnable = !Common.checkShutdown(0, roomId, 1) && random > 80;
         }
         if (isRobotEnable) {
             User robotInfo = userService.getById(1);
@@ -365,7 +365,7 @@ public class MessageController extends BaseController {
             macMsg.put("message_type", "text");
             macMsg.put("message_content", content);
             macMsg.put("message_where", "channel");
-            macMsg.put("message_id", UUID.fastUUID().getMostSignificantBits());
+            macMsg.put("message_id", IdUtil.fastUUID());
             macMsg.put("message_createtime", Common.time());
             macMsg.put("message_resource", content);
             macMsg.put("message_status", 0);
@@ -379,7 +379,7 @@ public class MessageController extends BaseController {
             sendMsg(roomId, new MsgVo(MsgVo.TEXT, macMsg).build());
         }
 
-        return "摸好了！";
+        return Response.successTip("摸好了！");
     }
 
 }
