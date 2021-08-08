@@ -436,8 +436,8 @@ public class SongController extends BaseController {
      */
     @GetMapping("/pass")
     public Response<String> pass(@RequestParam("mid") @NotNull Long mid,
-                       @RequestParam("room_id") @NotNull Integer roomId,
-                       @UserId Integer userId, HttpServletRequest request) {
+                                 @RequestParam("room_id") @NotNull Integer roomId,
+                                 @UserId Integer userId, HttpServletRequest request) {
 
         Room room = roomService.getById(roomId);
         User user = userService.getById(userId);
@@ -512,7 +512,7 @@ public class SongController extends BaseController {
         //TODO: 发送切歌系统消息到房间 OK!
         JSONObject passData = new JSONObject();
         user.setUser_password(null);
-        passData.put("content", user.getUser_name()+"切掉这首歌！");
+        passData.put("content", user.getUser_name() + "切掉了 " + songDetail.getName() + "这首歌！");
         String passMsg = new MsgVo(MsgVo.PASS, passData).build();
         imSocket.sendMsgToRoom(String.valueOf(roomId), passMsg);
         return Response.successTip("切歌成功！");
@@ -691,14 +691,16 @@ public class SongController extends BaseController {
             throw new ApiException(EE.PERMISSION_LOW);
         }
 
-        redis.setCacheListForDel(Constants.SongList + roomId, queue);
-        redis.expire(Constants.SongList + roomId, 86400, TimeUnit.SECONDS);
+        if (queue != null && queue.size() != 0) {
+            redis.setCacheListForDel(Constants.SongList + roomId, queue);
+            redis.expire(Constants.SongList + roomId, 86400, TimeUnit.SECONDS);
+        }
 
         //TODO: 发送移除队列歌曲系统消息到房间 OK!
         JSONObject data = new JSONObject();
         user.setUser_password(null);
         data.put("user", user);
-        data.put("song", removeSong.getSince());
+        data.put("song", removeSong);
         data.put("count", queue.size());
         String msg = new MsgVo(MsgVo.REMOVE_SONG, data).build();
         imSocket.sendMsgToRoom(String.valueOf(roomId), msg);

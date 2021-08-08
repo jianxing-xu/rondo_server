@@ -36,6 +36,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -91,7 +92,7 @@ public class MessageController extends BaseController {
         return Response.successTip("消息撤回成功");
     }
 
-    @DeleteMapping("/back/{room_id}")
+    @DeleteMapping("/clear/{room_id}")
     public String clear(@PathVariable("room_id") Integer roomId,
                         @UserId Integer userId) {
         User user = userService.getById(userId);
@@ -139,12 +140,13 @@ public class MessageController extends BaseController {
             redis.setCacheList(Constants.RoomMsgList + roomId, messageVOS);
             redis.expire(Constants.RoomMsgList + roomId, 10, TimeUnit.SECONDS);
         }
+        messageVOS.sort(Comparator.comparingInt(MessageVO::getMessage_createtime));
         return messageVOS;
     }
 
     @PostMapping("/send")
-    public String send(@RequestBody @Validated SendMsgDTO dto,
-                       @UserId Integer userId) {
+    public Response<String> send(@RequestBody @Validated SendMsgDTO dto,
+                                 @UserId Integer userId) {
         Integer roomId = dto.getRoom_id();
         String type = dto.getType();
         String msg = dto.getMsg();
@@ -179,17 +181,6 @@ public class MessageController extends BaseController {
             msg = HtmlUtil.filter(msg);
             if (StringUtils.isEmpty(msg)) {
                 throw ERR(EE.MSG_EMPTY);
-            }
-            // 检测到管理员 @all 消息，向所有房间的人发送消息
-            if (user.isAdmin()) {
-                if (msg.contains("@all")) {
-                    final String content = msg.replace("@all", "");
-                    String imMsg = new MsgVo(MsgVo.SYSTEM, new JSONObject() {{
-                        put("content", content);
-                    }}).build();
-                    broadcast(imMsg);
-                    return "广播发送成功";
-                }
             }
             // 关键词过滤
             final List<Keywords> keys = keywords();
@@ -233,6 +224,7 @@ public class MessageController extends BaseController {
             case ChatType.TEXT:
                 // TODO: 飞机票功能 Coming soon
                 // TODO: 链接功能 Coming soon
+                // 检测到管理员 @all 消息，向所有房间的人发送消息
                 // 插入数据库
                 Message message = new Message();
                 message.setMessage_user(userId);
@@ -250,17 +242,22 @@ public class MessageController extends BaseController {
                 JSONObject data = new JSONObject();
                 data.put("message_to", roomId);
                 data.put("message_type", "text");
-                data.put("message_content", resource);
+                data.put("message_content", msg);
                 data.put("message_where", where);
                 data.put("message_id", message.getMessage_id());
                 data.put("message_createtime", Common.time());
-                data.put("message_resource", resource);
+                data.put("message_resource", msg);
                 data.put("message_status", 0);
+                data.put("message_user", userId);
                 data.put("at", atUser);
                 data.put("user", user);
                 String imMsg = new MsgVo(MsgVo.TEXT, data).build();
-                // 发送socket消息
-                sendMsg(roomId, imMsg);
+                // 发送socket消息 、、 TODO: 判断@ALL
+                if (msg.contains("@all")) {
+                    broadcast(imMsg);
+                } else {
+                    sendMsg(roomId, imMsg);
+                }
                 // 更新内容
                 message.setMessage_content(msg);
                 message.setMessage_status(0);
@@ -271,6 +268,20 @@ public class MessageController extends BaseController {
                 redis.expire(Constants.LastSend + userId, 1, TimeUnit.SECONDS);
                 redis.setCacheObject(Constants.LastMsg + userId, msg);
                 redis.expire(Constants.LastMsg + userId, 10, TimeUnit.SECONDS);
+
+                //
+                if (user.isAdmin()) {
+                    if (msg.contains("@all")) {
+                        final String content = msg;
+                        String toAllMsg = new MsgVo(MsgVo.SYSTEM, new JSONObject() {{
+                            put("user", user);
+                            put("content", content);
+                            put("@all", true);
+                        }}).build();
+                        broadcast(toAllMsg);
+//                    return Response.successTip("广播发送成功");
+                    }
+                }
 
                 // TODO: 机器人彩蛋 Coming soon
                 if (atUser != null && atUser.getUser_id() == 1) {
@@ -299,6 +310,7 @@ public class MessageController extends BaseController {
                 imgData.put("message_createtime", Common.time());
                 imgData.put("message_resource", resource);
                 imgData.put("message_status", 0);
+                imgData.put("message_user", userId);
                 user.setUser_password(null);
                 imgData.put("at", atUser);
                 imgData.put("user", user);
@@ -320,7 +332,7 @@ public class MessageController extends BaseController {
                 throw ERR(EE.NOT_MSG_TYPE);
         }
 
-        return "发送成功！";
+        return Response.successTip("发送成功！");
     }
 
 

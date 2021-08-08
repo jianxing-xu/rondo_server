@@ -30,5 +30,6 @@
         LEFT JOIN sa_user
             ON sa_message.message_user = sa_user.user_id
         where sa_message.message_status = #{status} and sa_message.message_to = #{to}
+        order by message_updatetime desc
     </select>
 </mapper>

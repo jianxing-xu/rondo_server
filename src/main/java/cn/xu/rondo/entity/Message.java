@@ -103,6 +103,7 @@ public class Message implements Serializable {
     }
 
     public void setMessage_content(String message_content) {
+        this.message_content = HtmlUtil.unescape(message_content);
         this.message_content = HtmlUtil.filter(message_content);
     }
 

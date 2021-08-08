@@ -240,7 +240,7 @@ public class Common {
      * @return 是否禁止
      */
     public static boolean checkShutdown(int type, Integer roomId, Integer userId) {
-        Set<Integer> cacheSet = redis.getCacheSet(type == 0 ? Constants.Shutdown : Constants.SongDown + roomId);
+        Set<Integer> cacheSet = redis.getCacheSet((type == 0 ? Constants.Shutdown : Constants.SongDown) + roomId);
         if (cacheSet != null && cacheSet.size() != 0) return cacheSet.contains(userId);
         return false;
     }

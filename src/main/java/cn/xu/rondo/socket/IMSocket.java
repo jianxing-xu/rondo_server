@@ -75,9 +75,9 @@ public class IMSocket {
         data.put("user", nowSong.getUser());
         data.put("at", nowSong.getAt());
         String msg = new MsgVo(MsgVo.NOW, data).build();
-        sendMsgToRoom(channel, msg);
+        // 向刚刚连接成功的用户发送播放消息
+        sendToOne(session, msg);
         updateOnline(channel);
-
     }
 
     @OnMessage
@@ -151,6 +151,12 @@ public class IMSocket {
                 value.sendText(message);
             }
         }
+        return true;
+    }
+
+    @Async
+    boolean sendToOne(Session session, String msg) {
+        session.sendText(msg);
         return true;
     }
 }
