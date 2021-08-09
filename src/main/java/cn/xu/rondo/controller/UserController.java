@@ -184,12 +184,12 @@ public class UserController extends BaseController {
      * @return 用户消息
      */
     @GetMapping("/user_info/{userId}")
-    public User getUserInfo(@PathVariable("userId") Integer userId) {
+    public JSONObject getUserInfo(@PathVariable("userId") Integer userId) {
         User user = userService.getById(userId);
         JSONObject json = JSON.parseObject(JSON.toJSONString(user));
         Room room = roomService.getRoomByUser(userId);
         if (room != null) json.put("room", room);
-        return user;
+        return json;
     }
 
     /**
@@ -359,6 +359,7 @@ public class UserController extends BaseController {
         Set<String> ids = roomOnline.keySet().stream().map(String::valueOf).collect(Collectors.toSet());
         // 添加id为1的机器人
         ids.add("1");
+        ids.add("206603");
         List<User> users = userService.getUsersByIds(ids);
 
         if ("yes".equals(sync)) {

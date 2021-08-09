@@ -351,14 +351,6 @@ public class SongController extends BaseController {
 
 
         // TODO: sendWebsocketMsg 发送点歌消息到房间 OK!
-//        $msg = [
-//        'user' => getUserData($this->user),
-//                'song' => $song,
-//                "type" => "addSong",
-//                'at' => $at ?? false,
-//                "time" => date('H:i:s'),
-//                'count' => count($songList) ?? 0
-//        ];
         JSONObject data = new JSONObject();
         data.put("user", user);
         data.put("song", detail);

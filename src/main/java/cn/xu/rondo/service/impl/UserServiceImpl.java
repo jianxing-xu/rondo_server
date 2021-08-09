@@ -1,5 +1,6 @@
 package cn.xu.rondo.service.impl;
 
+import cn.hutool.core.net.Ipv4Util;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpUtil;
 import cn.xu.rondo.entity.User;
@@ -12,6 +13,7 @@ import cn.xu.rondo.utils.Constants;
 import cn.xu.rondo.utils.RedisUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import io.netty.util.internal.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -136,7 +139,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public List<User> getUsersByIds(Set<String> ids) {
-        Set<Integer> collect = ids.stream().map(Integer::parseInt).collect(Collectors.toSet());
+        Set<Integer> collect = new HashSet<>();
+        try {
+            collect = ids.stream().filter((item) -> !Common.isIpv4(item)).map(Integer::parseInt).collect(Collectors.toSet());
+        } catch (Exception e) {
+            log.error(e.toString());
+        }
         QueryWrapper<User> wrap = new QueryWrapper<>();
         wrap.in("user_id", collect);
         wrap.orderByAsc("user_id");

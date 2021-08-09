@@ -1,6 +1,7 @@
 package cn.xu.rondo.utils;
 
 import cn.hutool.core.util.EscapeUtil;
+import cn.hutool.core.util.ReUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -243,5 +244,10 @@ public class Common {
         Set<Integer> cacheSet = redis.getCacheSet((type == 0 ? Constants.Shutdown : Constants.SongDown) + roomId);
         if (cacheSet != null && cacheSet.size() != 0) return cacheSet.contains(userId);
         return false;
+    }
+
+    public static boolean isIpv4(String ip) {
+        String regex = "\\A(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z";
+        return ReUtil.isMatch(regex,ip);
     }
 }
