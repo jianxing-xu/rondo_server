@@ -68,6 +68,8 @@ public class UpdateRoomDTO {
     @NotNull(message = "房间ID不能为空")
     private Integer room_id;
 
+    private Integer room_playone;
+
     public boolean isPublic() {
         return room_public == 0;
     }

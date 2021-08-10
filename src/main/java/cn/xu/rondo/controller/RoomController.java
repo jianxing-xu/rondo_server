@@ -72,13 +72,15 @@ public class RoomController extends BaseController {
     public List<HotRoomVO> getHotRooms() {
         // 从redis中取，取到就返回
         List<HotRoomVO> roomList = redis.getCacheList(Constants.roomList);
-        if (roomList != null && roomList.size() != 0) return roomList;
+        if (roomList != null && roomList.size() != 0) {
+            return roomList;
+        }
         // 取不到就查询
         final List<HotRoomVO> list = roomService.hotRooms();
         // 将热门房间缓存到redis中
         redis.setCacheList(Constants.roomList, list);
         // 设置过期时间
-        redis.expire(Constants.roomList, 3, TimeUnit.MINUTES);
+        redis.expire(Constants.roomList, 10, TimeUnit.SECONDS);
         return list;
     }
 
@@ -89,7 +91,7 @@ public class RoomController extends BaseController {
      * @param userId 用户id
      */
     @PostMapping("/create")
-    public String create(@RequestBody @Validated CreateRoom data, @UserId Integer userId) {
+    public JSONObject create(@RequestBody @Validated CreateRoom data, @UserId Integer userId) {
         QueryWrapper<Room> wrapper = new QueryWrapper<>();
         wrapper.eq("room_user", userId);
         Room existRoom = roomService.getOne(wrapper);
@@ -101,14 +103,16 @@ public class RoomController extends BaseController {
         newRoom.setRoom_name(data.getRoom_name());
         newRoom.setRoom_notice(data.getRoom_notice());
         newRoom.setRoom_type(data.getRoom_type());
-        newRoom.setRoom_public(data.getRoom_public());
-        newRoom.setRoom_votepass(data.getRoom_votepass());
-        newRoom.setRoom_votepercent(data.getRoom_votepercent());
-        newRoom.setRoom_addsong(data.getRoom_addsong());
-        newRoom.setRoom_sendmsg(data.getRoom_sendmsg());
-        newRoom.setRoom_robot(data.getRoom_robot());
+//        newRoom.setRoom_public(data.getRoom_public());
+//        newRoom.setRoom_votepass(data.getRoom_votepass());
+//        newRoom.setRoom_votepercent(data.getRoom_votepercent());
+//        newRoom.setRoom_addsong(data.getRoom_addsong());
+//        newRoom.setRoom_sendmsg(data.getRoom_sendmsg());
+//        newRoom.setRoom_robot(data.getRoom_robot());
         roomService.save(newRoom);
-        return "创建成功！";
+        JSONObject json = new JSONObject();
+        json.put("room_id", newRoom.getRoom_id());
+        return json;
     }
 
     /**
@@ -199,7 +203,7 @@ public class RoomController extends BaseController {
         Room room = roomService.getById(room_id);
         User user = userService.getById(userId);
         if (room == null) throw new ApiException(EE.INFO_QUERY_ERR);
-        if (!userId.equals(room.getRoom_user()) && !user.isAdmin()) throw new ApiException(EE.VISITOR_BAN);
+        if (!userId.equals(room.getRoom_user()) && !user.isAdmin()) throw new ApiException(EE.PERMISSION_LOW);
         boolean reConnect;
         // 是公开房间就删除密码
         if (data.isPublic()) {
@@ -227,6 +231,7 @@ public class RoomController extends BaseController {
         room.setRoom_addcount(data.getRoom_addcount());
         room.setRoom_addsongcd(data.getRoom_addsongcd());
         room.setRoom_background(data.getRoom_background());
+        room.setRoom_playone(data.getRoom_playone());
         room.setRoom_id(room_id);
         //TODO：sendWebsocketMsg 发送通知到房间修改成功 OK!
         log.info(String.valueOf(reConnect));

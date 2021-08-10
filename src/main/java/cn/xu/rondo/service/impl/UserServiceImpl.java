@@ -48,9 +48,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public User reByLogin(String account, String name, String plat) {
         User user = new User();
         user.setUser_account(account);
-        user.setUser_password("123456");
+        user.setUser_password("123456"); // set 中做加密(错误的做法)
 
-        // 对密码进行加密
+        // 手动加密
         user.encodePwd();
 
         user.setUser_name(name);

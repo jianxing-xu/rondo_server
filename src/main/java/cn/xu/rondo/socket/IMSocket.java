@@ -69,14 +69,16 @@ public class IMSocket {
                        @RequestParam("channel") String channel) {
         CHATMAP.get(channel).put(account, session);
         SongQueueVo nowSong = redis.getCacheObject(Constants.SongNow + channel);
-        JSONObject data = new JSONObject();
-        data.put("song", nowSong.getSong());
-        data.put("since", nowSong.getSince());
-        data.put("user", nowSong.getUser());
-        data.put("at", nowSong.getAt());
-        String msg = new MsgVo(MsgVo.NOW, data).build();
-        // 向刚刚连接成功的用户发送播放消息
-        sendToOne(session, msg);
+        if (nowSong != null) {
+            JSONObject data = new JSONObject();
+            data.put("song", nowSong.getSong());
+            data.put("since", nowSong.getSince());
+            data.put("user", nowSong.getUser());
+            data.put("at", nowSong.getAt());
+            String msg = new MsgVo(MsgVo.NOW, data).build();
+            // 向刚刚连接成功的用户发送播放消息
+            sendToOne(session, msg);
+        }
         updateOnline(channel);
     }
 

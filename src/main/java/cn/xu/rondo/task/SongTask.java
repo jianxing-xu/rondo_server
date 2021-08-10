@@ -72,7 +72,7 @@ public class SongTask {
     }
 
 
-    // 每隔5秒检查房间，如果有新房间来，就开启房间线程（在删除房间的时候需要停止房间线程）
+    // 每隔5秒检查房间，如果有新房间来，）就开启房间线程（在删除房间的时候需要停止房间线程
     @Scheduled(fixedDelay = 5000)
     void updateRoomThread() {
         rooms.forEach((id, room) -> {
@@ -137,12 +137,26 @@ public class SongTask {
     }
 
     // 在队列里面没有歌曲的时候，机器人自动点一首歌加入到到队列中
-    public void getSongByRobot(Integer roomId) {
+    public void getSongByRobot(Room room) {
+        Integer roomId = room.getRoom_id();
         final List<SongQueueVo> queueVos = getSongList(roomId);
         SearchVo randomSong = null;
         if (queueVos.size() == 0) {
             try {
-                randomSong = kwUtils.getRandomSong();
+                // 开启电台随机点歌走歌单
+                if (room.isRadioStation() && !room.isSingleCycle()) {
+                    SongQueueVo song = songService.getRandSongByUser(room.getRoom_user());
+                    if (song != null) {
+                        randomSong = song.getSong();
+                    }
+                } else if (room.isRadioStation() && room.isSingleCycle()) {
+                    final SongQueueVo playing = getPlaying(roomId);
+                    if (playing != null) {
+                        randomSong = playing.getSong();
+                    }
+                } else {
+                    randomSong = kwUtils.getRandomSong();
+                }
             } catch (Exception e) {
                 log.error("加入队列：机器人点歌异常....");
             }
@@ -169,7 +183,7 @@ public class SongTask {
         all_room = roomService.list();
         if (all_room == null) all_room = new ArrayList<>();
         redis.setCacheList("all_room", all_room);
-        redis.expire("all_room", 5, TimeUnit.SECONDS);
+        redis.expire("all_room", 7, TimeUnit.SECONDS);
         return all_room;
     }
 
@@ -180,13 +194,12 @@ public class SongTask {
             SongQueueVo popSong = queue.remove(0);
             // 设置开始播放时间戳
             popSong.setSince(Common.time() + 5);
-            if (!isRadio) {
-                if (queue.size() == 0) {
-                    redis.deleteObject(Constants.SongList + roomId);
-                } else {
-                    redis.setCacheListForDel(Constants.SongList + roomId, queue);
-                    redis.expire(Constants.SongList + roomId, 86400);
-                }
+            // 如果队列没歌，就删除歌曲队列redis健，否则重置队列过期时间
+            if (queue.size() == 0) {
+                redis.deleteObject(Constants.SongList + roomId);
+            } else {
+                redis.setCacheListForDel(Constants.SongList + roomId, queue);
+                redis.expire(Constants.SongList + roomId, 86400);
             }
             log.info(String.format("房间 %s 从列表中弹出了一首歌：%s", roomId, popSong.getSong().getName()));
             return popSong;

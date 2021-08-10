@@ -11,7 +11,7 @@ public enum EE {
     FORBID(1003, "禁止访问"),
     ACCOUNT_ERR(1002, "账号或密码错误"),
     ACCOUNT_EMPTY(1004, "用户不存在"),
-    ROOM_EXIST(1005, "房间已存在"),
+    ROOM_EXIST(1005, ",你已经有一个房间了！"),
     ROOM_NOT_FOUND(1006, "房间不存在"),
     ROOM_BANED(1007, "房间已被封禁"),
     VISITOR_BAN(1008, "游客禁止访问"),

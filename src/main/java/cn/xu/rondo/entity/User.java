@@ -1,6 +1,7 @@
 package cn.xu.rondo.entity;
 
 import cn.xu.rondo.utils.Constants;
+import cn.xu.rondo.utils.StringUtils;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -30,6 +31,9 @@ public class User implements Serializable {
     public void encodePwd() {
         user_password = new String(Constants.aes.encrypt(user_password));
         log.warn(this.user_password, this.user_password.length());
+    }
+    public String encodePwd(String password) {
+        return new String(Constants.aes.encrypt(password));
     }
 
     public boolean verifyPwd(String pwd) {

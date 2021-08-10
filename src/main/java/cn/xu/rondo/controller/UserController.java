@@ -204,13 +204,14 @@ public class UserController extends BaseController {
                              @UserId Integer userId) {
         User user = new User();
         user.setUser_id(userId);
-        user.setUser_head(data.getUserHead());
-        user.setUser_sex(data.getUserSex());
-        user.setUser_touchtip(data.getUserTouchTip());
-        user.setUser_name(data.getUserName());
-        user.setUser_remark(data.getUserRemark());
-        if (!StringUtils.isEmpty(data.getUserPassword())) {
-            user.setUser_password(data.getUserPassword());
+        user.setUser_head(data.getUser_head());
+        user.setUser_sex(data.getUser_sex());
+        user.setUser_touchtip(data.getUser_touchtip());
+        user.setUser_name(data.getUser_name());
+        user.setUser_remark(data.getUser_remark());
+        if (!StringUtils.isEmpty(data.getUser_password())) {
+            user.setUser_password(data.getUser_password());// set中做了加密(这是错误的做法)
+            user.encodePwd();
         }
         userService.updateById(user);
         return "更新成功！";

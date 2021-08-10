@@ -9,15 +9,15 @@ import javax.validation.constraints.NotNull;
 @Data
 public class UpdateUserDTO {
     @NotBlank(message = "名字还是要有的！")
-    private String userName;
-    @NotNull(message = "直接不传就不太好！")
-    private String userHead;
-    @NotNull(message = "不能不传呀！")
-    private String userRemark;
+    private String user_name;
+    @NotNull(message = "头像直接不传就不太好！")
+    private String user_head;
+//    @NotNull(message = "个性签名不能不传呀！")
+    private String user_remark = "";
     @NotNull(message = "男的女的？")
-    private Integer userSex;
-    @NotNull(message = "摸一摸提示要有")
-    private String userTouchTip;
-    @NotNull(message = "为空字符串就是不修改密码")
-    private String userPassword;
+    private Integer user_sex;
+//    @NotNull(message = "摸一摸提示要有")
+    private String user_touchtip = "";
+//    @NotNull(message = "为空字符串就是不修改密码")
+    private String user_password = "";
 }
