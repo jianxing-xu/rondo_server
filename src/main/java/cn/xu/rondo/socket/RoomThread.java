@@ -44,7 +44,6 @@ public class RoomThread extends Thread {
                     // 当前时间戳小于 歌曲的开始播放时间 + 歌曲的长度表示歌曲还没有播放完，正在播放中.....
                     if (Common.time() < songQueueVo.getSong().getLength() + songQueueVo.getSince()) {
                         log.info(String.format("房间：%s 正在播放 %s 中,已经播放了%s秒了", room.getRoom_name(), HtmlUtil.unescape(songQueueVo.getSong().getName()), Common.time() - songQueueVo.getSince()));
-                        songTask.getSongByRobot(room);
                         continue;
                     }
                     if (room.isRadioStation() && room.isSingleCycle()) {
@@ -62,6 +61,7 @@ public class RoomThread extends Thread {
                     // 弹出了队列中的歌曲 直接播放
                     songTask.play(room.getRoom_id(), songQueueVo);
                 }
+                songTask.getSongByRobot(room);
 
                 // 执行到这里表示歌曲已经播放完了,如果是单曲循环
 //                log.info(String.format("歌曲 %s 已经播放完了", songQueueVo.getSong().getName()));

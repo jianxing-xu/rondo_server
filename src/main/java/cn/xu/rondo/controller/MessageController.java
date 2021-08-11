@@ -1,7 +1,6 @@
 package cn.xu.rondo.controller;
 
 
-import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HtmlUtil;
@@ -39,6 +38,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -136,11 +136,12 @@ public class MessageController extends BaseController {
 
         Page<MessageVO> page = new Page<>(pageNum, pageSize);
         final List<MessageVO> messageVOS = messageService.selectMessages(page, roomId, status);
+        messageVOS.sort(Comparator.comparing(MessageVO::getMessage_id));
         if (messageVOS.size() != 0) {
             redis.setCacheList(Constants.RoomMsgList + roomId, messageVOS);
             redis.expire(Constants.RoomMsgList + roomId, 10, TimeUnit.SECONDS);
         }
-        messageVOS.sort(Comparator.comparingInt(MessageVO::getMessage_createtime));
+
         return messageVOS;
     }
 
@@ -198,8 +199,8 @@ public class MessageController extends BaseController {
 
             //站外图片绝对路径判断
             if (HttpUtil.isHttp(resource) || HttpUtil.isHttps(resource)) {
-                resource = resource.replace("https", "");
-                resource = resource.replace("http", "");
+//                resource = resource.replace("https", "");
+//                resource = resource.replace("http", "");
                 if (!resource.contains(get("api_url"))) throw ERR(EE.NOT_SUP_SEND_PIC);
             }
         }
