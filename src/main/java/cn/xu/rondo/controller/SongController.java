@@ -13,6 +13,7 @@ import cn.xu.rondo.entity.dto.song.AddSongDTO;
 import cn.xu.rondo.entity.dto.song.FavSongDTO;
 import cn.xu.rondo.entity.vo.*;
 import cn.xu.rondo.enums.EE;
+import cn.xu.rondo.interceptor.VisitorInter;
 import cn.xu.rondo.response.Response;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IRoomService;
@@ -81,6 +82,7 @@ public class SongController extends BaseController {
      * @param page    页数
      * @param keyword 关键词
      */
+    @VisitorInter
     @GetMapping("/search")
     public List<SearchVo> search(@RequestParam(value = "isHot", required = false) Boolean isHot,
                                  @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
@@ -222,8 +224,10 @@ public class SongController extends BaseController {
             }
         }
         //TODO: 这里尝试同步一个歌曲的图片回来 cache 到redis中
-        redis.setCacheObject(Constants.SongDetail + mid, detail);
-        redis.expire(Constants.SongDetail + mid, 1, TimeUnit.HOURS);
+        if(detail!=null){
+            redis.setCacheObject(Constants.SongDetail + mid, detail);
+            redis.expire(Constants.SongDetail + mid, 1, TimeUnit.HOURS);
+        }
 
         // 如果没有被置顶，就表示队列中没有这首歌
         if (!isPushed) {
@@ -308,7 +312,7 @@ public class SongController extends BaseController {
         int myAddCount = 0;
         String existSongName = null;
         for (SongQueueVo songQueueVo : queue) {
-            if (songQueueVo.getUser().getUser_id().equals(userId)) {
+            if (songQueueVo.getUser().getUser_id().equals(userId)) {//TODO: NullPoint
                 myAddCount++;
             }
             if (songQueueVo.getSong().getMid().equals(mid)) {
@@ -397,6 +401,7 @@ public class SongController extends BaseController {
      * @param otherId  其他userId
      * @return json数据
      */
+    @VisitorInter
     @GetMapping("/userSongs")
     public JSONObject mySongs(@RequestParam(value = "page_num", required = false, defaultValue = "1") Integer pageNum,
                               @RequestParam(value = "page_size", required = false, defaultValue = "20") Integer pageSize,
@@ -515,6 +520,7 @@ public class SongController extends BaseController {
      *
      * @param roomId 房间id
      */
+    @VisitorInter
     @GetMapping("/queue/{roomId}")
     public List<SongQueueVo> queue(@PathVariable("roomId") Integer roomId) {
         List<SongQueueVo> queue = redis.getCacheList(Constants.SongList + roomId);
@@ -528,6 +534,7 @@ public class SongController extends BaseController {
      * @param mid 歌曲id
      * @return 歌词数组
      */
+    @VisitorInter
     @GetMapping("/lrc/{mid}")
     public JSONArray getLrc(@PathVariable("mid") @NotNull Long mid) {
 
@@ -678,14 +685,16 @@ public class SongController extends BaseController {
         }
         if (removeSong == null) throw new ApiException(EE.REMOVE_ERR);
 
-        // 管理员，vip，自己点的不可以删
-        if (!user.isAdmin() && !user.isVip() && !userId.equals(removeSong.getUser().getUser_id())) {
+        // 管理员,房主，vip，自己点的，有权操作
+        if (!user.isAdmin() && !user.isVip() && !userId.equals(room.getRoom_user()) && !userId.equals(removeSong.getUser().getUser_id())) {
             throw new ApiException(EE.PERMISSION_LOW);
         }
 
         if (queue != null && queue.size() != 0) {
             redis.setCacheListForDel(Constants.SongList + roomId, queue);
             redis.expire(Constants.SongList + roomId, 86400, TimeUnit.SECONDS);
+        }else {
+            redis.deleteObject((Constants.SongList+roomId));
         }
 
         //TODO: 发送移除队列歌曲系统消息到房间 OK!
@@ -707,6 +716,7 @@ public class SongController extends BaseController {
      * @param mid 歌曲id
      * @return 歌曲URL
      */
+    @VisitorInter
     @GetMapping("/playUrl/{mid}")
     public void getPlayUrl(@PathVariable("mid") @NotNull Long mid,
                            HttpServletResponse response) throws IOException {
@@ -731,6 +741,7 @@ public class SongController extends BaseController {
      * @param userId 用户id
      * @return 房间歌曲队列
      */
+    @VisitorInter
     @GetMapping("/queueSongs/{room_id}")
     public List<SongQueueVo> getQueue(@PathVariable("room_id") @NotNull Integer roomId,
                                       @UserId Integer userId) {

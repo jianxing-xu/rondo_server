@@ -11,6 +11,7 @@ import cn.xu.rondo.entity.dto.user.UpdateUserDTO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.enums.SwitchEnum;
+import cn.xu.rondo.interceptor.VisitorInter;
 import cn.xu.rondo.response.Response;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IRoomService;
@@ -68,6 +69,7 @@ public class UserController extends BaseController {
     IMSocket imSocket;
 
 
+    @VisitorInter
     @PostMapping("/login")
     public JSONObject login(@RequestBody @Validated LoginDTO loginDTO) {
         final String account = loginDTO.getAccount();
@@ -112,6 +114,7 @@ public class UserController extends BaseController {
         throw new ApiException(EE.ACCOUNT_ERR);
     }
 
+    @VisitorInter
     @PostMapping("/admin/login")
     public JSONObject loginAdmin(@RequestBody @Validated LoginDTO loginDTO) {
         final String account = loginDTO.getAccount();
@@ -149,6 +152,7 @@ public class UserController extends BaseController {
      * @param userId 用户id
      * @return 用户数据
      */
+    @VisitorInter
     @PostMapping("/info")
     public JSONObject getMyUserInfo(@UserId Integer userId) {
         if (Common.isVisitor()) {
@@ -183,6 +187,7 @@ public class UserController extends BaseController {
      * @param userId 用户id
      * @return 用户消息
      */
+    @VisitorInter
     @GetMapping("/user_info/{userId}")
     public JSONObject getUserInfo(@PathVariable("userId") Integer userId) {
         User user = userService.getById(userId);
@@ -217,6 +222,7 @@ public class UserController extends BaseController {
         return "更新成功！";
     }
 
+    @VisitorInter
     @GetMapping("/tempToken")
     public String getTempToken() {
         return Constants.tempToken;
@@ -345,6 +351,7 @@ public class UserController extends BaseController {
      * @param sync   'yes' 同步到数据库
      * @return 用户json列表
      */
+    @VisitorInter
     @GetMapping("/online/{roomId}/{sync}")
     public List<JSONObject> online(@PathVariable("roomId") Integer roomId,
                                    @PathVariable(value = "sync", required = false) String sync) {

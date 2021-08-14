@@ -1,0 +1,35 @@
+#redis配置
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: tumovobt
+    url: jdbc:mysql://127.0.0.1:3306/rondo?useUnicode=true&characterEncoding=utf8
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: lotdyy99
+    database: 0
+    connect-timeout: 5000
+  web:
+    resources:
+      static-locations: file:/home/rondo/uploads/,classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,classpath:/upload/,classpath:/
+
+
+rondo:
+  static-url: 49.235.175.45:${server.port}/res/
+  # upload-path 本机以下配置，在linux中需要重新配置：/home/rondo/uploads/
+  #  upload-path: /Users/jackson/Desktop/MyProject/BackEnd/rondo/uploads/
+  upload-path: /home/rondo/uploads/
+  avatar-path: avatar/
+  chat-path: chat/
+  music-path: music/
+
+  upload-img-max: 1MB
+  upload-music-max: 20MB
+
+  ws:
+    path: /ws
+    port: 8810
+server:
+  port: 8899

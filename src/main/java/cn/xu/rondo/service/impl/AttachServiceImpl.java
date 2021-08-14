@@ -57,7 +57,7 @@ public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> impleme
         if (size / 1024 / 1024 > limit) throw new ApiException(EE.AVA_MAX_1M);
         //检查类型
         String type = file.getContentType();
-        if (!"image/jpeg".equals(type) && !"image/png".equals(type))
+        if (!"image/jpeg".equals(type) && !"image/png".equals(type) && !"image/gif".equals(type))
             throw new ApiException(EE.FILE_TYPE_ERR);
     }
 
@@ -112,7 +112,7 @@ public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> impleme
 
     @Override
     public void checkMusicType(MultipartFile file) {
-        log.info("文件类型："+file.getContentType());
+        log.info("文件类型：" + file.getContentType());
         int limit = Integer.parseInt(musicMax.replace("MB", ""));
         if (file.isEmpty()) throw new ApiException(EE.FILE_EMPTY);
         // 检查大小

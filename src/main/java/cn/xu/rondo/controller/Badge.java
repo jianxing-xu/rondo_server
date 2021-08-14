@@ -3,6 +3,7 @@ package cn.xu.rondo.controller;
 import cn.hutool.core.codec.Base64;
 import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.vo.SongQueueVo;
+import cn.xu.rondo.interceptor.VisitorInter;
 import cn.xu.rondo.service.IRoomService;
 import cn.xu.rondo.utils.Common;
 import cn.xu.rondo.utils.Constants;
@@ -35,6 +36,7 @@ public class Badge {
      * @param response 响应对象
      * @throws IOException 异常
      */
+    @VisitorInter
     @GetMapping("/badge/{room_id}")
     public void badge(@PathVariable Integer room_id, HttpServletResponse response) throws IOException {
         SongQueueVo now = redis.getCacheObject(Constants.SongNow + room_id);

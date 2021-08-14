@@ -35,15 +35,14 @@ public class RoomThread extends Thread {
     public void run() {
         while (!exited) {
             Room room = SongTask.rooms.get(roomId);
-            log.info("----------------------------------------------------");
             try {
                 sleep(2000);
                 SongQueueVo songQueueVo = songTask.getPlaying(room.getRoom_id());
                 // 判断是否有正在播放的歌曲
                 if (songQueueVo != null && songQueueVo.getSong() != null) {
+                    songTask.getSongByRobot(room);
                     // 当前时间戳小于 歌曲的开始播放时间 + 歌曲的长度表示歌曲还没有播放完，正在播放中.....
                     if (Common.time() < songQueueVo.getSong().getLength() + songQueueVo.getSince()) {
-                        log.info(String.format("房间：%s 正在播放 %s 中,已经播放了%s秒了", room.getRoom_name(), HtmlUtil.unescape(songQueueVo.getSong().getName()), Common.time() - songQueueVo.getSince()));
                         continue;
                     }
                     if (room.isRadioStation() && room.isSingleCycle()) {
@@ -63,52 +62,6 @@ public class RoomThread extends Thread {
                 }
                 songTask.getSongByRobot(room);
 
-                // 执行到这里表示歌曲已经播放完了,如果是单曲循环
-//                log.info(String.format("歌曲 %s 已经播放完了", songQueueVo.getSong().getName()));
-//                //必须 开启电台模式 单曲循环才有效
-//                if (room.isSingleCycle() && room.isRadioStation()) {
-//                    // 重置当前点歌时间为当前时间戳
-//                    log.info(String.format("房间 %s 开始单曲循环", room.getRoom_name()));
-//                    songQueueVo.setSince(Common.time());
-//                    songTask.play(room.getRoom_id(), songQueueVo);
-//                    continue;
-//                }
-//
-//                // 如果是电台房间 且没有单曲循环，就从用户已点歌曲中随机取一首歌播放
-//                if (room.isRadioStation()) {
-//                    songQueueVo = songTask.songService.getRandSongByUser(room.getRoom_user());
-//                    log.info(String.format("房间 %s 开启了电台模式", room.getRoom_name()));
-//                    // 如果电台中没有歌曲 就播放不了了
-//                    if (songQueueVo == null) {
-//                        log.info("房间 " + room.getRoom_name() + " 的电台也没有歌曲！没有歌曲在播放！！");
-//                        continue;
-//                    }
-//                    log.info(String.format("房间 %s 从电台中拿到了歌曲 %s,并开始播放", room.getRoom_name(), songQueueVo.getSong().getName()));
-//                    songTask.play(room.getRoom_id(), songQueueVo);
-//                }
-//                // 如果不是电台模式，需要判断是否开启机器人点歌
-//                log.info(String.format("房间 %s 不是电台模式", room.getRoom_name()));
-//                if (room.isRobot()) {
-//                    log.info(String.format("房间 %s 开启了机器人点歌模式", room.getRoom_name()));
-//                    SongQueueVo song = songTask.getSongByRobot();
-//                    if (song == null) {
-//                        log.info("房间 " + room.getRoom_name() + " 的机器人没点着歌");
-//                        continue;
-//                    }
-//                    log.info(String.format("机器人点着歌了：%s", song.getSong().getName()));
-//                    songTask.play(room.getRoom_id(), song);
-//                } else {
-//                    log.info("也没有机器人点歌");
-//                }
-//                // 执行到这里就是，当前房间没有正在播放的歌曲-----------------NO_PLAYING---------------
-//                log.info("房间 " + room.getRoom_name() + " 队列里没有歌曲拉~");
-//                // 从队列中弹出一首歌播放
-//                songQueueVo = songTask.popSong(room.getRoom_id(), room.isRadioStation());
-//                if (songQueueVo != null) {
-//                    songTask.play(room.getRoom_id(), songQueueVo);
-//                    log.info("开始播放 刚刚弹出的歌：" + songQueueVo.getSong().getName());
-//                    continue;
-//                }
             } catch (HttpException e) {
                 log.error("房间" + room.getRoom_name() + "网络异常，正在重连.....");
             } catch (RedisSystemException e) {

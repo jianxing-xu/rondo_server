@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -62,6 +63,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setUser_updatetime((int) (System.currentTimeMillis() / 1000));
         user.setUser_touchtip("大帅比");
         user.setRole(0);
+        user.setUser_vip(0);
         user.setUser_device(plat);
         try {
             String content = HttpUtil.get("http://guozhivip.com/yy/api/api.php");
@@ -141,7 +143,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public List<User> getUsersByIds(Set<String> ids) {
         Set<Integer> collect = new HashSet<>();
         try {
-            collect = ids.stream().filter((item) -> !Common.isIpv4(item)).map(Integer::parseInt).collect(Collectors.toSet());
+            collect = ids.stream().map(s -> {
+                try {
+                    final int i = Integer.parseInt(s);
+                    return i;
+                } catch (Exception e) {
+                    return null;
+                }
+            }).filter(Objects::nonNull).collect(Collectors.toSet());
         } catch (Exception e) {
             log.error(e.toString());
         }

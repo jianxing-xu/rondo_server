@@ -1,6 +1,7 @@
 package cn.xu.rondo.config;
 
 import cn.xu.rondo.interceptor.TokenInterceptor;
+import cn.xu.rondo.interceptor.VisitorInterceptor;
 import cn.xu.rondo.utils.params_resolver.UserIdResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -15,17 +16,19 @@ import java.util.List;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new VisitorInterceptor())
+                .addPathPatterns("/**")
+                .excludePathPatterns("/res/**");
         registry.addInterceptor(new TokenInterceptor())
                 .addPathPatterns("/**")
                 // 无需token放行路线
                 .excludePathPatterns("/user/login", "/res/**", "/common/**")
                 .excludePathPatterns("/user/pwd/**")
-                .excludePathPatterns("favicon.ico")
-                .excludePathPatterns("/message/list/**")
-                .excludePathPatterns("/badge/badge/**", "/song/playUrl/**")
+                .excludePathPatterns("/favicon.ico")
+                .excludePathPatterns("/badge/badge/**", "/song/playUrl/*")
 
-                // 暂时 放行
-                .excludePathPatterns("/**")
+        // 暂时 放行
+//                .excludePathPatterns("/**")
         ;
     }
 

@@ -10,6 +10,7 @@ import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.entity.vo.RoomDetailVO;
 import cn.xu.rondo.entity.vo.SocketUrlVO;
 import cn.xu.rondo.enums.EE;
+import cn.xu.rondo.interceptor.VisitorInter;
 import cn.xu.rondo.response.exception.ApiException;
 import cn.xu.rondo.service.IRoomService;
 import cn.xu.rondo.service.IUserService;
@@ -19,6 +20,7 @@ import cn.xu.rondo.task.SongTask;
 import cn.xu.rondo.utils.*;
 import cn.xu.rondo.utils.Common;
 import cn.xu.rondo.utils.params_resolver.UserId;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.slf4j.Logger;
@@ -35,6 +37,7 @@ import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,6 +71,7 @@ public class RoomController extends BaseController {
      *
      * @return 响应对象
      */
+    @VisitorInter
     @GetMapping("/hot")
     public List<HotRoomVO> getHotRooms() {
         // 从redis中取，取到就返回
@@ -103,12 +107,6 @@ public class RoomController extends BaseController {
         newRoom.setRoom_name(data.getRoom_name());
         newRoom.setRoom_notice(data.getRoom_notice());
         newRoom.setRoom_type(data.getRoom_type());
-//        newRoom.setRoom_public(data.getRoom_public());
-//        newRoom.setRoom_votepass(data.getRoom_votepass());
-//        newRoom.setRoom_votepercent(data.getRoom_votepercent());
-//        newRoom.setRoom_addsong(data.getRoom_addsong());
-//        newRoom.setRoom_sendmsg(data.getRoom_sendmsg());
-//        newRoom.setRoom_robot(data.getRoom_robot());
         roomService.save(newRoom);
         JSONObject json = new JSONObject();
         json.put("room_id", newRoom.getRoom_id());
@@ -137,22 +135,22 @@ public class RoomController extends BaseController {
      * @param roomPassword 房间密码
      * @return 房间信息
      */
+    @VisitorInter
     @GetMapping("/info/{room_id}")
-    public RoomDetailVO info(@PathVariable("room_id") @NotNull Integer roomId,
-                             @RequestParam(value = "room_password", required = false) String roomPassword,
-                             @UserId Integer userId) {
+    public JSONObject info(@PathVariable("room_id") @NotNull Integer roomId,
+                           @RequestParam(value = "room_password", required = false) String roomPassword,
+                           @UserId Integer userId) {
         Room room = roomService.getById(roomId);
         if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
         User admin = userService.getById(room.getRoom_user());
         if (room.getRoom_status().equals(1))
             throw new ApiException(EE.ROOM_BANED);
 
-        RoomDetailVO vo = new RoomDetailVO();
-        vo.setRoom(room);
-        vo.setAdmin(admin);
+        JSONObject roomJson = (JSONObject) JSONObject.toJSON(room);
+        roomJson.put("admin", admin);
         if (Common.isVisitor()) {
             if (!room.isPublic()) throw new ApiException(EE.VISITOR_BAN);
-            return vo;
+            return roomJson;
         }
         User user = userService.getById(userId);
         if (user == null) throw new ApiException(EE.INFO_QUERY_ERR);
@@ -166,7 +164,7 @@ public class RoomController extends BaseController {
                 if (savedPassword.equals(room.getRoom_password())) {
                     redis.setCacheObject(Constants.SavedPwd(roomId, userId), room.getRoom_password());
                     redis.expire(Constants.SavedPwd(roomId, userId), 1, TimeUnit.DAYS);
-                    return vo;
+                    return roomJson;
                 } else {
                     // 有缓存但缓存和房间密码不匹配，表示在用户输入密码后，房间修改了密码
                     redis.deleteObject(Constants.SavedPwd(roomId, userId));
@@ -179,7 +177,7 @@ public class RoomController extends BaseController {
                 if (roomPassword.equals(room.getRoom_password())) {
                     redis.setCacheObject(Constants.SavedPwd(roomId, userId), room.getRoom_password());
                     redis.expire(Constants.SavedPwd(roomId, userId), 1, TimeUnit.DAYS);
-                    return vo;
+                    return roomJson;
                 } else {
                     throw new ApiException(EE.ROOM_PWD_ERROR);
                 }
@@ -187,7 +185,7 @@ public class RoomController extends BaseController {
             // 没输入密码字段
             throw new ApiException(EE.POP_INPUT_PWD);
         }
-        return vo;
+        return roomJson;
     }
 
     /**
@@ -246,6 +244,7 @@ public class RoomController extends BaseController {
     }
 
 
+    @VisitorInter
     @CrossOrigin
     @GetMapping("/websocketUrl")
     public SocketUrlVO websocketUrl(@RequestParam(value = "channel") @NotBlank String channel,
@@ -276,11 +275,11 @@ public class RoomController extends BaseController {
         if (Common.isVisitor()) {
             // 游客不允许访问加密房间
             if (!room.isPublic()) throw new ApiException(EE.VISITOR_BAN);
-            vo.setAccount(ip);
+            vo.setAccount(ip + "=" + UUID.randomUUID().getMostSignificantBits());
         } else {
             if (!user.isAdmin() && !userId.equals(room.getRoom_user()) && !room.isPublic()) {
                 String savedPassword = redis.getCacheObject(Constants.SavedPwd(room.getRoom_id(), userId));
-                if (!savedPassword.equals(room.getRoom_password()) && !room.getRoom_password().equals(password)) {
+                if (savedPassword != null && !savedPassword.equals(room.getRoom_password()) && !room.getRoom_password().equals(password)) {
                     throw new ApiException(EE.ROOM_PSD_ERR);
                 }
             }

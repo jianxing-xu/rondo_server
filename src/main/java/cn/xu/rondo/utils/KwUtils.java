@@ -85,8 +85,10 @@ public class KwUtils {
                 JSONObject jsonObject = JSONObject.parseObject(body);
                 Object[] keys = jsonObject.getJSONArray("data").toArray();
                 List<String> objects = Convert.toList(String.class, keys);
-                redis.setCacheList(Constants.KwHotKey, objects);
-                redis.expire(Constants.KwHotKey, 1, TimeUnit.HOURS);
+                if (objects != null) {
+                    redis.setCacheList(Constants.KwHotKey, objects);
+                    redis.expire(Constants.KwHotKey, 1, TimeUnit.HOURS);
+                }
                 return objects;
             }
         } catch (Exception e) {

@@ -61,15 +61,15 @@ public class SongTask {
     // 记录当前房间数据，每5s从数据库同步一次
     public static Map<Integer, Room> rooms = new HashMap<>();
 
-    @Scheduled(fixedDelay = 5000)
-    void printTreads() {
-        final Set<Thread> threads = Thread.getAllStackTraces().keySet();
-        for (Thread thread : threads) {
-            if (thread.getName().startsWith(Constants.RoomThreadPREFIX)) {
-                log.warn("线程：" + thread.getName());
-            }
-        }
-    }
+//    @Scheduled(fixedDelay = 5000)
+//    void printTreads() {
+//        final Set<Thread> threads = Thread.getAllStackTraces().keySet();
+//        for (Thread thread : threads) {
+//            if (thread.getName().startsWith(Constants.RoomThreadPREFIX)) {
+//                log.warn("线程：" + thread.getName());
+//            }
+//        }
+//    }
 
 
     // 每隔5秒检查房间，如果有新房间来，）就开启房间线程（在删除房间的时候需要停止房间线程
@@ -167,9 +167,11 @@ public class SongTask {
                 songQueueVo.setSong(randomSong);
                 User robot = userService.getById(1);
                 songQueueVo.setUser(robot);
-                queueVos.add(songQueueVo);
-                redis.setCacheListForDel(Constants.SongList + roomId, queueVos);
-                redis.expire(Constants.SongList + roomId, 1, TimeUnit.DAYS);
+                queueVos.add(songQueueVo);   
+                if (queueVos != null && queueVos.size() != 0) {
+                    redis.setCacheListForDel(Constants.SongList + roomId, queueVos);
+                    redis.expire(Constants.SongList + roomId, 1, TimeUnit.DAYS);
+                }
             }
         }
     }
@@ -182,8 +184,10 @@ public class SongTask {
         }
         all_room = roomService.list();
         if (all_room == null) all_room = new ArrayList<>();
-        redis.setCacheList("all_room", all_room);
-        redis.expire("all_room", 7, TimeUnit.SECONDS);
+        if (all_room.size() != 0) {
+            redis.setCacheList("all_room", all_room);
+            redis.expire("all_room", 7, TimeUnit.SECONDS);
+        }
         return all_room;
     }
 

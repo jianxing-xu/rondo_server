@@ -16,6 +16,7 @@ import cn.xu.rondo.entity.vo.MessageVO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.ChatType;
 import cn.xu.rondo.enums.EE;
+import cn.xu.rondo.interceptor.VisitorInter;
 import cn.xu.rondo.response.Response;
 import cn.xu.rondo.service.IMessageService;
 import cn.xu.rondo.service.IRoomService;
@@ -26,19 +27,15 @@ import cn.xu.rondo.utils.RedisUtil;
 import cn.xu.rondo.utils.StringUtils;
 import cn.xu.rondo.utils.params_resolver.UserId;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotNull;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -109,6 +106,7 @@ public class MessageController extends BaseController {
         return "房间消息清除成功!";
     }
 
+    @VisitorInter
     @GetMapping("/list/{room_id}")
     public List<MessageVO> list(@PathVariable("room_id") Integer roomId,
                                 @RequestParam(value = "page_num", required = false, defaultValue = "1") Integer pageNum,
@@ -146,8 +144,8 @@ public class MessageController extends BaseController {
     }
 
     @PostMapping("/send")
-    public Response<String> send(@RequestBody @Validated SendMsgDTO dto,
-                                 @UserId Integer userId) {
+    public String send(@RequestBody @Validated SendMsgDTO dto,
+                       @UserId Integer userId) {
         Integer roomId = dto.getRoom_id();
         String type = dto.getType();
         String msg = dto.getMsg();
@@ -157,10 +155,6 @@ public class MessageController extends BaseController {
         final User user = checkUser(userId);
         final Room room = checkRoom(roomId);
         String savedPassword = redis.getCacheObject(Constants.SavedPwd(roomId, userId));
-        // 房间密码
-        if (!room.isPublic() && !user.isAdmin() && room.isOwner(userId) && !room.getRoom_password().equals(savedPassword)) {
-            throw ERR(EE.ROOM_PSD_ERR);
-        }
         // 全员禁言判断
         if (!user.isAdmin() && !room.isOwner(userId) && room.isBanAll()) {
             throw ERR(EE.ALL_MUTE);
@@ -172,6 +166,10 @@ public class MessageController extends BaseController {
         // 判断 ip 地址禁言
         if (messageService.checkIPBAN()) {
             throw ERR(EE.IP_MUTE);
+        }
+        // 房间密码
+        if (!room.isPublic() && !user.isAdmin() && !room.isOwner(userId) && !room.getRoom_password().equals(savedPassword)) {
+            throw ERR(EE.ROOM_PSD_ERR);
         }
 
         // TODO: 判断嘉宾发言 , 暂时pass嘉宾功能 room_sendmsg == 1 Coming soon
@@ -191,18 +189,17 @@ public class MessageController extends BaseController {
         }
         // 处理IMG消息
         if (ChatType.IMG.equals(type)) {
-            if (!user.isAdmin() && !user.isVip()) {
-                //在 18 -- 9 点之间 不允许发送自定义图片
-                if (messageService.checkTimeIn()) throw ERR(EE.NOT_SUP_SEND_PIC);
-            }
             if (StringUtils.isEmpty(resource)) throw ERR(EE.MSG_EMPTY);
 
-            //站外图片绝对路径判断
-            if (HttpUtil.isHttp(resource) || HttpUtil.isHttps(resource)) {
-//                resource = resource.replace("https", "");
-//                resource = resource.replace("http", "");
-                if (!resource.contains(get("api_url"))) throw ERR(EE.NOT_SUP_SEND_PIC);
-            }
+            //站外图片绝对路径判断 TODO: 站外图片支持 Coming soon,,,,,,,
+//            if (!resource.contains(get("api_url"))) {
+//                if (!user.isAdmin() && !user.isVip() && !room.isOwner(userId)) {
+//                    //在 18 -- 9 点之间 不允许发送自定义图片
+//                    if (messageService.checkTimeIn()) {
+//                        throw ERR(EE.NOT_SUP_SEND_PIC);
+//                    }
+//                }
+//            }
         }
 
         // 房主/管理员不受限制
@@ -333,7 +330,7 @@ public class MessageController extends BaseController {
                 throw ERR(EE.NOT_MSG_TYPE);
         }
 
-        return Response.successTip("发送成功！");
+        return "发送成功！";
     }
 
 
