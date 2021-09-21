@@ -11,6 +11,7 @@ import cn.xu.rondo.service.IUserService;
 import cn.xu.rondo.utils.Common;
 import cn.xu.rondo.utils.Constants;
 import cn.xu.rondo.utils.RedisUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +76,9 @@ public class SongServiceImpl extends ServiceImpl<SongMapper, Song> implements IS
     @Override
     public SongQueueVo getRandSongByUser(Integer userId) {
         User user = userService.getById(userId);
-        List<Song> songs = mapper.selectList(Wrappers.emptyWrapper());
+        QueryWrapper<Song> wrapper = new QueryWrapper<>();
+        wrapper.eq("song_user",userId);
+        List<Song> songs = mapper.selectList(wrapper);
         if (songs != null && songs.size() != 0) {
             Song song = songs.get(RandomUtil.randomInt(0, songs.size() - 1));
             SongQueueVo songQueueVo = new SongQueueVo();

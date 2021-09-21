@@ -40,17 +40,10 @@ public class RoomThread extends Thread {
                 SongQueueVo songQueueVo = songTask.getPlaying(room.getRoom_id());
                 // 判断是否有正在播放的歌曲
                 if (songQueueVo != null && songQueueVo.getSong() != null) {
-                    songTask.getSongByRobot(room);
                     // 当前时间戳小于 歌曲的开始播放时间 + 歌曲的长度表示歌曲还没有播放完，正在播放中.....
                     if (Common.time() < songQueueVo.getSong().getLength() + songQueueVo.getSince()) {
-                        continue;
-                    }
-                    if (room.isRadioStation() && room.isSingleCycle()) {
-                        // 开始单曲模式
-                        // 重置当前点歌时间为当前时间戳
-                        log.info(String.format("房间 %s 开始单曲循环", room.getRoom_name()));
-                        songQueueVo.setSince(Common.time());
-                        songTask.play(room.getRoom_id(), songQueueVo);
+                        // 点一首歌到队列中
+                        songTask.getSongByRobot(room);
                         continue;
                     }
                 }

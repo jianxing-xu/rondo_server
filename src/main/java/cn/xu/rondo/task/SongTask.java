@@ -122,7 +122,7 @@ public class SongTask {
     }
 
 
-    public SongQueueVo getSongByRobot() {
+    public SongQueueVo getRandomToQueue() {
         SearchVo randomSong = kwUtils.getRandomSong();
         if (randomSong != null) {
             redis.setCacheObject(Constants.SongDetail + randomSong.getMid(), randomSong);
@@ -143,19 +143,28 @@ public class SongTask {
         SearchVo randomSong = null;
         if (queueVos.size() == 0) {
             try {
-                // 开启电台随机点歌走歌单
+                // 开启电台随机点歌 并且不是单曲循环，走我的歌单
                 if (room.isRadioStation() && !room.isSingleCycle()) {
                     SongQueueVo song = songService.getRandSongByUser(room.getRoom_user());
+                    // 如果从歌单中拿不到歌曲，就从机器人拿
                     if (song != null) {
                         randomSong = song.getSong();
+                    } else {
+                        randomSong = kwUtils.getRandomSong();
                     }
+                    // 开启电台 并且是 单曲循环
                 } else if (room.isRadioStation() && room.isSingleCycle()) {
+                    // 取正在播放的歌曲
                     final SongQueueVo playing = getPlaying(roomId);
                     if (playing != null) {
                         randomSong = playing.getSong();
+                    } else {
+                        randomSong = kwUtils.getRandomSong();
                     }
                 } else {
-                    randomSong = kwUtils.getRandomSong();
+                    if (room.isRobot()) {
+                        randomSong = kwUtils.getRandomSong();
+                    }
                 }
             } catch (Exception e) {
                 log.error("加入队列：机器人点歌异常....");
@@ -167,7 +176,7 @@ public class SongTask {
                 songQueueVo.setSong(randomSong);
                 User robot = userService.getById(1);
                 songQueueVo.setUser(robot);
-                queueVos.add(songQueueVo);   
+                queueVos.add(songQueueVo);
                 if (queueVos != null && queueVos.size() != 0) {
                     redis.setCacheListForDel(Constants.SongList + roomId, queueVos);
                     redis.expire(Constants.SongList + roomId, 1, TimeUnit.DAYS);

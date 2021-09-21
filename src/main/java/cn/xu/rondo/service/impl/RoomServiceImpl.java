@@ -1,6 +1,5 @@
 package cn.xu.rondo.service.impl;
 
-import cn.hutool.core.net.Ipv4Util;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpRequest;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import sun.net.util.IPAddressUtil;
 
 import java.util.List;
 

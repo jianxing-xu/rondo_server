@@ -39,6 +39,7 @@ public class IMSocket {
                                 @RequestParam("channel") String channel,
                                 @RequestParam("ticket") String ticket) {
         try {
+            log.info(ticket);
             Claims claims = JWTUtils.verifyJwt(ticket);
             String TAccount = String.valueOf(claims.getId());
             String TChannel = String.valueOf(claims.getSubject());
