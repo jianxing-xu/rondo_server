@@ -17,7 +17,7 @@ spring:
 
 
 rondo:
-  static-url: 49.235.175.45:${server.port}/res/
+  static-url: 106.15.137.156:${server.port}/res/
   # upload-path 本机以下配置，在linux中需要重新配置：/home/rondo/uploads/
   #  upload-path: /Users/jackson/Desktop/MyProject/BackEnd/rondo/uploads/
   upload-path: /home/rondo/uploads/

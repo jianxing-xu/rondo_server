@@ -69,17 +69,7 @@ public class IMSocket {
                        @RequestParam("account") String account,
                        @RequestParam("channel") String channel) {
         CHATMAP.get(channel).put(account, session);
-        SongQueueVo nowSong = redis.getCacheObject(Constants.SongNow + channel);
-        if (nowSong != null) {
-            JSONObject data = new JSONObject();
-            data.put("song", nowSong.getSong());
-            data.put("since", nowSong.getSince());
-            data.put("user", nowSong.getUser());
-            data.put("at", nowSong.getAt());
-            String msg = new MsgVo(MsgVo.NOW, data).build();
-            // 向刚刚连接成功的用户发送播放消息
-            sendToOne(session, msg);
-        }
+        sendPlaySongEventNow(session, channel, MsgVo.NOW);
         updateOnline(channel);
     }
 
@@ -90,6 +80,9 @@ public class IMSocket {
         // 收到
         if (message.equals("bye")) {
             onClose(session, account, channel);
+        }
+        if (message.equals("pullPlaySong")) {
+            sendPlaySongEventNow(session, channel, MsgVo.PLAY_SONG);
         }
     }
 
@@ -161,5 +154,20 @@ public class IMSocket {
     boolean sendToOne(Session session, String msg) {
         session.sendText(msg);
         return true;
+    }
+
+    @Async
+    public void sendPlaySongEventNow(Session session, String channel, String type) {
+        SongQueueVo nowSong = redis.getCacheObject(Constants.SongNow + channel);
+        if (nowSong != null) {
+            JSONObject data = new JSONObject();
+            data.put("song", nowSong.getSong());
+            data.put("since", nowSong.getSince());
+            data.put("user", nowSong.getUser());
+            data.put("at", nowSong.getAt());
+            String msg = new MsgVo(type, data).build();
+            // 向刚刚连接成功的用户发送播放消息
+            sendToOne(session, msg);
+        }
     }
 }
