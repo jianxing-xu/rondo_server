@@ -1,8 +1,9 @@
 package cn.xu.rondo.entity.vo;
 
 
-import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.IdUtil;
+import cn.xu.rondo.utils.RedisUtil;
+import cn.xu.rondo.utils.SpringUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.Getter;

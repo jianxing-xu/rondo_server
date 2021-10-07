@@ -5,10 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HtmlUtil;
 import cn.hutool.http.HttpUtil;
-import cn.xu.rondo.entity.Keywords;
-import cn.xu.rondo.entity.Message;
-import cn.xu.rondo.entity.Room;
-import cn.xu.rondo.entity.User;
+import cn.xu.rondo.entity.*;
 import cn.xu.rondo.entity.dto.AtDTO;
 import cn.xu.rondo.entity.dto.SendMsgDTO;
 import cn.xu.rondo.entity.dto.message.MoDTO;
@@ -27,12 +24,15 @@ import cn.xu.rondo.utils.RedisUtil;
 import cn.xu.rondo.utils.StringUtils;
 import cn.xu.rondo.utils.params_resolver.UserId;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -392,4 +392,37 @@ public class MessageController extends BaseController {
         return Response.successTip("摸好了！");
     }
 
+
+    // TODO: ADMIN interface
+
+    /**
+     * 条件查询所有消息列表
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param keyword  搜索关键字 in (song_name,song_id,song_user,song_singer)
+     * @return JSONObject
+     */
+    @GetMapping("/all")
+    public JSONObject list(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+                           @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize,
+                           @RequestParam(value = "keyword", defaultValue = "") String keyword) {
+        final Page<Message> userPager = new Page<>(pageNum, pageSize);
+        final QueryWrapper<Message> wrapper = new QueryWrapper<>();
+        wrapper.like("message_id", keyword).or();
+        wrapper.like("message_user", keyword).or();
+        wrapper.like("message_content", keyword).or();
+        wrapper.like("message_to", keyword).or();
+        wrapper.like("message_type", keyword);
+        final Page<Message> page = messageService.page(userPager, wrapper);
+        JSONObject json = new JSONObject();
+        json.put("list", page.getRecords());
+        json.put("total", page.getTotal());
+        return json;
+    }
+
+    @DeleteMapping("/delMsgs/{ids}")
+    public void delMsgs(@PathVariable String ids) {
+        messageService.removeByIds(Arrays.asList(ids.split(",")));
+    }
 }

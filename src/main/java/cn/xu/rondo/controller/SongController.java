@@ -224,7 +224,7 @@ public class SongController extends BaseController {
             }
         }
         //TODO: 这里尝试同步一个歌曲的图片回来 cache 到redis中
-        if(detail!=null){
+        if (detail != null) {
             redis.setCacheObject(Constants.SongDetail + mid, detail);
             redis.expire(Constants.SongDetail + mid, 1, TimeUnit.HOURS);
         }
@@ -693,8 +693,8 @@ public class SongController extends BaseController {
         if (queue != null && queue.size() != 0) {
             redis.setCacheListForDel(Constants.SongList + roomId, queue);
             redis.expire(Constants.SongList + roomId, 86400, TimeUnit.SECONDS);
-        }else {
-            redis.deleteObject((Constants.SongList+roomId));
+        } else {
+            redis.deleteObject((Constants.SongList + roomId));
         }
 
         //TODO: 发送移除队列歌曲系统消息到房间 OK!
@@ -750,6 +750,53 @@ public class SongController extends BaseController {
         if (queue == null) queue = new ArrayList<>();
         return queue;
     }
+
+
+    // TODO: //ADMIN Interface
+
+    /**
+     * 条件查询所有歌曲列表
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param keyword  搜索关键字 in (song_name,song_id,song_user,song_singer)
+     * @return JSONObject
+     */
+    @GetMapping("/list")
+    public JSONObject list(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+                           @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize,
+                           @RequestParam(value = "keyword", defaultValue = "") String keyword) {
+        final Page<Song> userPager = new Page<>(pageNum, pageSize);
+        final QueryWrapper<Song> wrapper = new QueryWrapper<>();
+        wrapper.like("song_name", keyword).or();
+        wrapper.like("song_id", keyword).or();
+        wrapper.like("song_user", keyword).or();
+        wrapper.like("song_singer", keyword).or();
+        final Page<Song> page = songService.page(userPager, wrapper);
+        JSONObject json = new JSONObject();
+        json.put("list", page.getRecords());
+        json.put("total", page.getTotal());
+        return json;
+    }
+
+    @DeleteMapping("/delSongs/{idsStr}")
+    public void delSongs(@PathVariable String idsStr) {
+        final List<String> ids = Arrays.asList(idsStr.split(","));
+        songService.removeByIds(ids);
+    }
+
+    @GetMapping("/next/{room_id}")
+    public void next(@PathVariable("room_id") Integer roomId) {
+        Room room = roomService.getById(roomId);
+        if (room == null) throw new ApiException(EE.ROOM_NOT_FOUND);
+        // 取正在播放的歌曲
+        SongQueueVo now = redis.getCacheObject(Constants.SongNow + roomId);
+        if (now == null) throw new ApiException(EE.NOT_NOW_PLAY);
+
+        redis.setCacheObject(Constants.SongNow + roomId, null);
+    }
+
+
 }
 
 

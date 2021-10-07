@@ -5,6 +5,7 @@ import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.User;
 import cn.xu.rondo.entity.dto.CreateRoom;
 import cn.xu.rondo.entity.dto.UpdateRoomDTO;
+import cn.xu.rondo.entity.dto.user.UpdateUserDTOByAdmin;
 import cn.xu.rondo.entity.vo.HotRoomVO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.entity.vo.RoomDetailVO;
@@ -23,6 +24,7 @@ import cn.xu.rondo.utils.params_resolver.UserId;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +32,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import cn.xu.rondo.response.Response;
+import org.yeauty.pojo.Session;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -350,5 +351,33 @@ public class RoomController extends BaseController {
         return "删除成功!";
     }
 
+
+    /**
+     * TODO:=====================================后台接口======================
+     */
+
+    /**
+     * 条件查询所有房间列表
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param keyword  搜索关键字 in (room_id,room_user,room_name)
+     * @return JSONObject
+     */
+    @GetMapping("/list")
+    public JSONObject list(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+                           @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize,
+                           @RequestParam(value = "keyword", defaultValue = "") String keyword) {
+        final Page<Room> userPager = new Page<>(pageNum, pageSize);
+        final QueryWrapper<Room> wrapper = new QueryWrapper<>();
+        wrapper.like("room_id", keyword).or();
+        wrapper.like("room_user", keyword).or();
+        wrapper.like("room_name", keyword).or();
+        final Page<Room> page = roomService.page(userPager, wrapper);
+        JSONObject json = new JSONObject();
+        json.put("list", page.getRecords());
+        json.put("total", page.getTotal());
+        return json;
+    }
 }
 

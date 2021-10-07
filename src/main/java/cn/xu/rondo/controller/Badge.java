@@ -54,8 +54,8 @@ public class Badge {
         String singer = now.getSong().getSinger();
         String pic = "data:image/jpeg;base64," + Base64.encode(Common.readFileByUrl(now.getSong().getPic()));
         String userName = now.getUser().getUser_name();
-        String bg = "data:image/jpeg;base64," + Base64.encode(Common.readFileByUrl("http://127.0.0.1:" + port + "/res/images/player_bg.png"));
-        String bar = "data:image/jpeg;base64," + Base64.encode(Common.readFileByUrl("http://127.0.0.1:" + port + "/res/images/player_bar.png"));
+        String bg = "data:image/jpeg;base64," + Base64.encode(Common.readFileByUrl("http://127.0.0.1:" + port + "/api/res/images/player_bg.png"));
+        String bar = "data:image/jpeg;base64," + Base64.encode(Common.readFileByUrl("http://127.0.0.1:" + port + "/api/res/images/player_bar.png"));
 
         String roomName = room.getRoom_name();
         String str = "\n" +

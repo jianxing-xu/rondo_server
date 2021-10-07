@@ -22,7 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(new TokenInterceptor())
                 .addPathPatterns("/**")
                 // 无需token放行路线
-                .excludePathPatterns("/user/login", "/res/**", "/common/**")
+                .excludePathPatterns("/user/login", "/user/admin/login", "/res/**", "/common/**")
                 .excludePathPatterns("/user/pwd/**")
                 .excludePathPatterns("/favicon.ico")
                 .excludePathPatterns("/badge/badge/**", "/song/playUrl/*")

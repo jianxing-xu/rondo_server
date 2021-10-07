@@ -6,6 +6,7 @@ import cn.xu.rondo.utils.Constants;
 import cn.xu.rondo.utils.JWTUtils;
 import cn.xu.rondo.utils.RedisUtil;
 import cn.xu.rondo.utils.SpringUtils;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.MalformedJwtException;
@@ -131,9 +132,19 @@ public class IMSocket {
     @Async
     public boolean sendMsgToRoom(String room_id, String message) {
         ConcurrentHashMap<String, Session> room = IMSocket.CHATMAP.get(room_id);
+
+        // 每次发送消息增加在线人数数据
+        JSONObject msgData = JSONObject.parseObject(message);
+        final ConcurrentHashMap<String, Session> RoomUsers = CHATMAP.get(room_id);
+        if (RoomUsers != null) {
+            Integer onlineCount = RoomUsers.size();
+            if (onlineCount != null) {
+                msgData.put("online", onlineCount);
+            }
+        }
         if (room == null) return false;
         for (Session session : room.values()) {
-            session.sendText(message);
+            session.sendText(JSON.toJSONString(msgData));
         }
         return true;
     }

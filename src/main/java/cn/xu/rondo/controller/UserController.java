@@ -4,10 +4,7 @@ package cn.xu.rondo.controller;
 import cn.hutool.core.util.ReUtil;
 import cn.xu.rondo.entity.Room;
 import cn.xu.rondo.entity.User;
-import cn.xu.rondo.entity.dto.user.LoginDTO;
-import cn.xu.rondo.entity.dto.user.ResetPwdDTO;
-import cn.xu.rondo.entity.dto.user.UpdatePwdDTO;
-import cn.xu.rondo.entity.dto.user.UpdateUserDTO;
+import cn.xu.rondo.entity.dto.user.*;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.enums.SwitchEnum;
@@ -27,6 +24,7 @@ import cn.xu.rondo.utils.validation.EnumValue;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +32,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.yeauty.pojo.Session;
 
-import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -126,9 +123,25 @@ public class UserController extends BaseController {
         } else {
             //否则就是账号登录
             queryWrapper.eq("user_account", account);
+            String code = "" + redis.getCacheObject(Constants.mailCode(account));
+            if (password.equals(code)) {
+                User user = userService.getOne(queryWrapper);
+                if (user != null) {
+                    HashMap<String, Object> data = new HashMap<>();
+                    data.put("user_id", user.getUser_id());
+                    data.put("user_account", user.getUser_account());
+                    String token = JWTUtils.createToken(data);
+                    // 返回token
+                    return new JSONObject() {{
+                        put("token", token);
+                    }};
+                } else {
+                    throw new ApiException(EE.ACCOUNT_ERR);
+                }
+            }
         }
         User user = userService.getOne(queryWrapper);
-        if (user != null && password.equals(user.getUser_password())) {
+        if (user != null && user.verifyPwd(password)) {
             Integer role = user.getRole();
             if (role != 1) {
                 throw new ApiException(EE.FORBID);
@@ -411,5 +424,71 @@ public class UserController extends BaseController {
         String password = (String) data.get("password");
         return null;
     }
+
+
+    /**
+     * TODO:=====================================后台接口======================
+     */
+
+    /**
+     * 条件查询所有用户列表
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param keyword  搜索关键字 in (user_id,user_name,user_account)
+     * @return JSONObject
+     */
+    @GetMapping("/list")
+    public JSONObject list(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+                           @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize,
+                           @RequestParam(value = "keyword", defaultValue = "") String keyword) {
+        final Page<User> userPager = new Page<>(pageNum, pageSize);
+        final QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.like("user_id", keyword).or();
+        wrapper.like("user_name", keyword).or();
+        wrapper.like("user_account", keyword).or();
+        final Page<User> page = userService.page(userPager, wrapper);
+        JSONObject json = new JSONObject();
+        json.put("list", page.getRecords());
+        json.put("total", page.getTotal());
+        return json;
+    }
+
+    /**
+     * 根据id删除用户 多个用户用,分割
+     *
+     * @param userIds ids参数
+     */
+    @DeleteMapping("/del/{userIds}")
+    public void delUser(@PathVariable("userIds") String userIds) {
+        final List<String> ids = Arrays.asList(userIds.split(","));
+        userService.removeByIds(ids);
+    }
+
+    /**
+     * 更新用户，相对于用户端多了vip和user_group
+     *
+     * @param data
+     */
+    @PostMapping("/updateUser")
+    public void updateUser(@RequestBody UpdateUserDTOByAdmin data) {
+        User user = new User();
+        user.setUser_id(data.getUser_id());
+        user.setUser_head(data.getUser_head());
+        user.setUser_sex(data.getUser_sex());
+        user.setUser_touchtip(data.getUser_touchtip());
+        user.setUser_name(data.getUser_name());
+        user.setUser_remark(data.getUser_remark());
+        user.setUser_vip(data.getUser_vip());
+        user.setRole(data.getUser_role());
+        user.setUser_status(data.getUser_status());
+        if (!StringUtils.isEmpty(data.getUser_password())) {
+            user.setUser_password(data.getUser_password());// set中做了加密(这是错误的做法)
+            user.encodePwd();
+        }
+        userService.updateById(user);
+    }
+
+
 }
 
