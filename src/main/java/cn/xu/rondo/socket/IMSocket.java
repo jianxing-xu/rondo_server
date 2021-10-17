@@ -1,7 +1,10 @@
 package cn.xu.rondo.socket;
 
+import cn.xu.rondo.entity.vo.HotRoomVO;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.entity.vo.SongQueueVo;
+import cn.xu.rondo.service.IRoomService;
+import cn.xu.rondo.service.IUserService;
 import cn.xu.rondo.utils.Constants;
 import cn.xu.rondo.utils.JWTUtils;
 import cn.xu.rondo.utils.RedisUtil;
@@ -13,6 +16,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.netty.handler.codec.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -32,6 +36,8 @@ public class IMSocket {
     private static final Logger log = LoggerFactory.getLogger(IMSocket.class);
     public static ConcurrentHashMap<String, ConcurrentHashMap<String, Session>> CHATMAP = new ConcurrentHashMap<>();
     private RedisUtil redis = SpringUtils.getBean("RedisUtil");
+    @Autowired
+    private IRoomService roomService;
 
 
     @BeforeHandshake
@@ -110,7 +116,7 @@ public class IMSocket {
 
     // 更新在线人数
     @Async
-    public void updateOnline(String channel) {
+    synchronized public void updateOnline(String channel) {
         JSONObject online = new JSONObject();
         online.put("type", MsgVo.ONLINE);
         List<Integer> list = new Vector<>();
@@ -124,7 +130,23 @@ public class IMSocket {
             }
             online.put("data", list);
             log.info("房间" + channel + "在线:" + list);
+            updateOnlineToDB(list.size(), Integer.parseInt(channel));
             sendMsgToRoom(channel, online.toJSONString());
+        }
+    }
+
+    @Async
+    public void updateOnlineToDB(int len,Integer roomId) {
+        roomService.updateOnline(len, roomId);
+        List<HotRoomVO> rooms = redis.getCacheObject(Constants.roomList);
+        if (rooms != null && rooms.size() != 0) {
+            rooms.forEach(hotRoomVO -> {
+                if(roomId.equals(hotRoomVO.getRoom_id())) {
+                    hotRoomVO.setRoom_online(len);
+                }
+            });
+            redis.setCacheListForDel(Constants.roomList, rooms);
+            redis.expire(Constants.roomList, 5);
         }
     }
 

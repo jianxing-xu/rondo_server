@@ -134,10 +134,7 @@ public class User implements Serializable {
     private Integer user_role;
 
     public boolean isAdmin() {
-        List<Integer> admins = new ArrayList<Integer>() {{
-            add(1);
-        }};
-        return admins.contains(user_group) || user_role == 1;
+        return "1".equals(user_role+"");
     }
 
     public boolean isVip() {

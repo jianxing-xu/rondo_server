@@ -85,7 +85,7 @@ public class RoomController extends BaseController {
         // 将热门房间缓存到redis中
         redis.setCacheList(Constants.roomList, list);
         // 设置过期时间
-        redis.expire(Constants.roomList, 10, TimeUnit.SECONDS);
+        redis.expire(Constants.roomList, 5, TimeUnit.SECONDS);
         return list;
     }
 

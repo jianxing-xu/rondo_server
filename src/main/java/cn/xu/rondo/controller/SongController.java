@@ -27,6 +27,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,6 +166,18 @@ public class SongController extends BaseController {
         imSocket.sendMsgToRoom(String.valueOf(roomId), msg);
         return Response.successTip("收藏成功");
     }
+
+    @VisitorInter
+    @GetMapping("/isFav/{mid}")
+    public Boolean isFav (@PathVariable("mid") @NotNull Integer mid,
+                       @UserId Integer userId) {
+        final Song oneByMap = songService.getOneByMap(new HashMap<String, Object>() {{
+            put("song_mid", mid);
+            put("song_user", userId);
+        }});
+        return oneByMap != null;
+    }
+
 
     /**
      * 添加一首歌到song表中
@@ -795,6 +808,7 @@ public class SongController extends BaseController {
 
         redis.setCacheObject(Constants.SongNow + roomId, null);
     }
+
 
 
 }
