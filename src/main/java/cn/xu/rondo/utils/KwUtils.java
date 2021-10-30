@@ -154,16 +154,28 @@ public class KwUtils {
 
     public String getPlayUrl(Long mid) {
         try {
-            String body = HttpRequest.get("http://bd.kuwo.cn/url?rid=" + mid + "&type=convert_url3&br=128kmp3")
+//            https://m.kuwo.cn/newh5app/api/mobile/v1/music/src/228908
+            String body = HttpRequest.get("https://m.kuwo.cn/newh5app/api/mobile/v1/music/src/" + mid)
                     .timeout(5000)
                     .execute().body();
             JSONObject json = JSON.parseObject(body);
             if ("200".equals(String.valueOf(json.get("code")))) {
-                if (StringUtils.isNotEmpty(String.valueOf(json.get("url")))) {
-                    return String.valueOf(json.get("url"));
+                if (StringUtils.isNotEmpty(String.valueOf(json.get("data")))) {
+                    return String.valueOf(json.getJSONObject("data").get("url"));
+                }
+            } else {
+                body = HttpRequest.get("http://bd.kuwo.cn/api/v1/www/music/playUrl?mid=" + mid + "&type=music&httpsStatus=1")
+                        .timeout(5000)
+                        .execute().body();
+                json = JSON.parseObject(body);
+                if ("200".equals(String.valueOf(json.get("code")))) {
+                    if (StringUtils.isNotEmpty(String.valueOf(json.get("data")))) {
+                        return String.valueOf(json.getJSONObject("data").get("url"));
+                    }
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ApiException(EE.KW_QUERY_ERR);
         }
         return null;
