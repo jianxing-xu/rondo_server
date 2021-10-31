@@ -155,7 +155,9 @@ public class KwUtils {
     public String getPlayUrl(Long mid) {
         try {
 //            https://m.kuwo.cn/newh5app/api/mobile/v1/music/src/228908
-            String body = HttpRequest.get("https://m.kuwo.cn/newh5app/api/mobile/v1/music/src/" + mid)
+            //http://bd.kuwo.cn/url?rid=' . $mid . '&type=convert_url3&br=128kmp3
+            String body = HttpRequest.get("http://bd.kuwo.cn/api/v1/www/music/playUrl?mid=" + mid + "&type=music&httpsStatus=1")
+                    .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36")
                     .timeout(5000)
                     .execute().body();
             JSONObject json = JSON.parseObject(body);
@@ -164,7 +166,7 @@ public class KwUtils {
                     return String.valueOf(json.getJSONObject("data").get("url"));
                 }
             } else {
-                body = HttpRequest.get("http://bd.kuwo.cn/api/v1/www/music/playUrl?mid=" + mid + "&type=music&httpsStatus=1")
+                body = HttpRequest.get("https://m.kuwo.cn/newh5app/api/mobile/v1/music/src/" + mid)
                         .timeout(5000)
                         .execute().body();
                 json = JSON.parseObject(body);
