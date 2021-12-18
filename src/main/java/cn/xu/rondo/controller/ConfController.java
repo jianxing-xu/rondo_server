@@ -2,7 +2,6 @@ package cn.xu.rondo.controller;
 
 
 import cn.xu.rondo.entity.Conf;
-import cn.xu.rondo.entity.Message;
 import cn.xu.rondo.interceptor.VisitorInter;
 import cn.xu.rondo.service.IConfService;
 import cn.xu.rondo.utils.Common;
@@ -12,7 +11,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.stereotype.Controller;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -32,6 +32,18 @@ public class ConfController extends BaseController {
     @GetMapping("/conf/{key}")
     public String getConf(@PathVariable("key") String key) {
         return get(key);
+    }
+
+    @GetMapping("/conf/${keys}")
+    @VisitorInter
+    public Map getConfForKeys(@PathVariable("keys") String keys) {
+        final String[] keyList = keys.split(",");
+        Map<String, String> m = new HashMap<>();
+        for (String k : keyList) {
+            String v = get(k);
+            m.put(k, v);
+        }
+        return m;
     }
 
     @PostMapping("/add")
