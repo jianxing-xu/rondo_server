@@ -361,7 +361,7 @@ public class SongController extends BaseController {
         songQueueVo.setSong(detail);
         songQueueVo.setUser(user);
         songQueueVo.setAt(atUser);
-        queue.add(0, songQueueVo);
+        queue.add(songQueueVo);
 
         redis.setCacheListForDel(Constants.SongList + roomId, queue);
         redis.expire(Constants.SongList + roomId, 1, TimeUnit.DAYS);

@@ -67,7 +67,9 @@ public class AttachController extends BaseController {
                          @RequestParam("type") Integer type, //0:头像，1:聊天图片
                          @UserId Integer userId) {
         try {
-            attachService.checkAvatarType(file);
+            if(type == 0) {
+                attachService.checkAvatarType(file);
+            }
             //比对 sha 摘要值
             String sha = new String(DigestUtil.sha1(file.getBytes()));
             Attach attach = attachService.checkFileExist(sha);

@@ -79,8 +79,9 @@ public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> impleme
 //        File serverFile = FileUtil.file(dir + filename);
         File saveFile = new File(dir + filename);
         Thumbnails.of(file.getInputStream())
-                .size(400, 400) // 限制了大小后就不用压缩了
-                //.outputQuality(type == 0 ? 0.8f : 1) // 压缩
+                //.size(400, 400) // 限制了大小后就不用压缩了
+                .scale(1.00f)
+                .outputQuality(0.5f) // 压缩
                 .toFile(saveFile);
         //将上传的文件写入到服务器端文件内
         return filename;

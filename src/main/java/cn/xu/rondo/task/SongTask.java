@@ -2,6 +2,7 @@ package cn.xu.rondo.task;
 
 
 import cn.xu.rondo.entity.Room;
+import cn.xu.rondo.entity.Song;
 import cn.xu.rondo.entity.User;
 import cn.xu.rondo.entity.vo.MsgVo;
 import cn.xu.rondo.entity.vo.SearchVo;
@@ -180,6 +181,32 @@ public class SongTask {
                 if (queueVos != null && queueVos.size() != 0) {
                     redis.setCacheListForDel(Constants.SongList + roomId, queueVos);
                     redis.expire(Constants.SongList + roomId, 1, TimeUnit.DAYS);
+                }
+                //向数据库插入播放的歌曲
+                final SearchVo finalRandomSong = randomSong;
+                Song existSong = songService.getOneByMap(new HashMap<String, Object>() {{
+                    put("song_mid", finalRandomSong.getMid());
+                    put("song_user", 1);
+                }});
+                if (existSong == null) {
+                    existSong = new Song();
+                    existSong.setSong_mid(randomSong.getMid());
+                    existSong.setSong_name(randomSong.getName());
+                    existSong.setSong_pic(randomSong.getPic());
+                    existSong.setSong_length(randomSong.getLength());
+                    existSong.setSong_singer(randomSong.getSinger());
+                    existSong.setSong_play(1);
+                    existSong.setSong_week(1);
+                    existSong.setSong_user(1);
+                    existSong.setSong_createtime(Common.time().intValue());
+                    existSong.setSong_updatetime(Common.time().intValue());
+                    songService.save(existSong);
+                } else {
+                    existSong.setSong_id(existSong.getSong_id());
+                    existSong.setSong_week(existSong.getSong_week() + 1);
+                    existSong.setSong_play(existSong.getSong_play() + 1);
+                    existSong.setSong_updatetime(Common.time().intValue());
+                    songService.updateById(existSong);
                 }
             }
         }
