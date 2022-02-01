@@ -12,5 +12,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @since 2021-07-17
  */
 public interface IConfService extends IService<Conf> {
-
+    String get(String key);
 }

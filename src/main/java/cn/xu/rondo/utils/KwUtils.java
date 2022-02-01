@@ -9,6 +9,7 @@ import cn.hutool.http.HttpRequest;
 import cn.xu.rondo.entity.vo.SearchVo;
 import cn.xu.rondo.enums.EE;
 import cn.xu.rondo.response.exception.ApiException;
+import cn.xu.rondo.service.IConfService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -19,8 +20,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Arrays.*;
 
 
 @Component("KwUtils")
@@ -32,12 +36,19 @@ public class KwUtils {
     @Autowired
     RedisUtil redis;
 
+    @Autowired
+    IConfService confService;
+
     public static final Logger log = LoggerFactory.getLogger(KwUtils.class);
 
 
     public SearchVo getRandomSong() {
-        List<Integer> bangIds = ListUtil.of(278, 284, 26, 64, 187, 281, 153, 17, 16, 158, 145, 93, 185, 290, 279, 264, 283, 282, 255);
-        Integer bangId = bangIds.get(RandomUtil.randomInt(0, bangIds.size() - 1));
+        final String randomBangIds = confService.get("BANG_IDS");
+        List<String> bangIds = Arrays.asList(randomBangIds.split(","));
+        if(bangIds.size() <= 0) {
+            bangIds = ListUtil.of("93", "17", "16", "158", "145", "284", "187", "26", "185", "278", "104", "151");
+        }
+        String bangId = bangIds.get(RandomUtil.randomInt(0, bangIds.size() - 1));
         String token = RandomUtil.randomNumbers(8);
         try {
             String body = HttpRequest.get("http://kuwo.cn/api/www/bang/bang/musicList?bangId=" + bangId + "&pn=1&rn=100")
