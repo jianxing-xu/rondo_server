@@ -36,10 +36,8 @@ public class BaseController {
 
     // 获取配置值
     protected String get(String key) {
-        QueryWrapper<Conf> wrap = new QueryWrapper<>();
-        wrap.eq("conf_key", key);
-        final Conf conf = confService.getOne(wrap);
-        return conf.getConf_value();
+        final String value = confService.get(key);
+        return value;
     }
 
     // 抛出异常

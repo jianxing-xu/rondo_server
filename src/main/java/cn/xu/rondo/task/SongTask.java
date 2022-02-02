@@ -168,6 +168,7 @@ public class SongTask {
                     }
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 log.error("加入队列：机器人点歌异常....");
             }
             if (randomSong != null) {

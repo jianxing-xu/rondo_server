@@ -34,7 +34,7 @@ public class ConfController extends BaseController {
         return get(key);
     }
     @VisitorInter
-    @GetMapping("/conf/{keys}")
+    @GetMapping("/confs/{keys}")
     public Map<String, String> getConfForKeys(@PathVariable("keys") String keys) {
         final String[] keyList = keys.split(",");
         Map<String, String> m = new HashMap<>();

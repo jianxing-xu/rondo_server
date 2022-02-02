@@ -23,8 +23,9 @@ public class ConfServiceImpl extends ServiceImpl<ConfMapper, Conf> implements IC
     // 获取配置值
     public String get(String key) {
         QueryWrapper<Conf> wrap = new QueryWrapper<>();
-        wrap.eq("conf_key", key);
+        wrap.likeLeft("conf_key", key);
         final Conf conf = getOne(wrap);
+        if(conf == null) return "";
         return conf.getConf_value();
     }
 }

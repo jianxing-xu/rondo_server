@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.*;
 
@@ -44,7 +45,7 @@ public class KwUtils {
 
     public SearchVo getRandomSong() {
         final String randomBangIds = confService.get("BANG_IDS");
-        List<String> bangIds = Arrays.asList(randomBangIds.split(","));
+        List<String> bangIds = stream(randomBangIds.split(",")).filter(it -> !it.equals("")).collect(Collectors.toList());
         if(bangIds.size() <= 0) {
             bangIds = ListUtil.of("93", "17", "16", "158", "145", "284", "187", "26", "185", "278", "104", "151");
         }
